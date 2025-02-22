@@ -31,7 +31,7 @@ export default {
         }
 
         const html = await response.text();
-        const images = await filterValidImages(extractImageData(html));
+        const images = await extractImageData(html);
         imageUrls = imageUrls.concat(images);
       }
 
@@ -48,24 +48,7 @@ export default {
   },
 };
 
-async function filterValidImages(images) {
-  const filteredImages = [];
-  for (const image of images) {
-    if (image.url === "https://ssl.gstatic.com/gb/images/bar/al-icon.png") {
-      continue;
-    }
-    try {
-      const response = await fetch(image.url, { method: "HEAD" });
-      const contentType = response.headers.get("content-type");
-      if (response.ok && contentType && contentType.startsWith("image/")) {
-        filteredImages.push(image);
-      }
-    } catch (error) {
-      continue;
-    }
-  }
-  return filteredImages;
-}
+
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
