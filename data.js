@@ -1,3 +1,5 @@
+import sharp from "sharp";
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -31,6 +33,16 @@ export default {
 
       const html = await response.text();
       const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+
+      for (let image of images) {
+        try {
+          const compressedImageBuffer = await compressImage(image.url);
+          image.compressedUrl = `data:image/jpeg;base64,${compressedImageBuffer.toString('base64')}`;
+        } catch (error) {
+          console.error("Gagal mengompresi gambar:", error);
+        }
+      }
+
       imageUrls = imageUrls.concat(images);
 
       return new Response(JSON.stringify({ images: imageUrls }), {
@@ -45,6 +57,16 @@ export default {
     }
   },
 };
+
+async function compressImage(imageUrl) {
+  const response = await fetch(imageUrl);
+  if (!response.ok) throw new Error("Gagal mengambil gambar");
+  const buffer = await response.arrayBuffer();
+
+  return sharp(Buffer.from(buffer))
+    .jpeg({ quality: 50 }) // Mengurangi kualitas menjadi 50%
+    .toBuffer();
+}
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
