@@ -45,7 +45,7 @@ export default {
 
 // Fungsi untuk mengekstrak URL gambar dan judul dari HTML
 function extractImagesWithTitles(html) {
-  const imageRegex = /"https?:\\/\\/[^"']+\.(jpg|jpeg|png|gif|webp)"/g;
+  const imageRegex = /"https?:\/\/[^"']+\.(jpg|jpeg|png|gif|webp)"/g; // Fix syntax error
   const matches = html.match(imageRegex);
   const imageUrls = matches ? matches.map(url => url.replace(/"/g, "")) : [];
 
@@ -58,15 +58,12 @@ function extractImagesWithTitles(html) {
     return titleElement ? titleElement.textContent.trim() : "";
   });
 
-  const images = imageUrls.map((url, index) => {
-    return {
-      url,
-      title: titles[index] || ""
-    };
-  });
-
-  return images;
+  return imageUrls.map((url, index) => ({
+    url,
+    title: titles[index] || ""
+  }));
 }
+
 
 // Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
