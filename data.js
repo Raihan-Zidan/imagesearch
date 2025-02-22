@@ -44,39 +44,38 @@ export default {
   },
 };
 
-// Fungsi untuk mengekstrak gambar + judul + URL halaman sumber
 function extractImageData(html) {
   const imageRegex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
-  const titleRegex = /<div class="Q6A6Dc ddBkwd">([^<]+)<\/div>/g;
   const pageUrlRegex = /<a href="\/imgres\?imgurl=(.*?)&amp;imgrefurl=(.*?)"/g;
+  const itemRegex = /<div class="isv-r[^>]*>([\s\S]*?)<\/div>/g;
 
   const imageMatches = html.match(imageRegex) || [];
-  const titleMatches = [...html.matchAll(titleRegex)];
   const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+  const itemMatches = [...html.matchAll(itemRegex)];
 
   let results = [];
 
-  for (let i = 0; i < imageMatches.length; i++) {
-    const imageUrl = imageMatches[i].replace(/"/g, "");
+  const pageUrlMap = new Map();
+  pageUrlMatches.forEach(match => {
+    pageUrlMap.set(decodeURIComponent(match[1]), decodeURIComponent(match[2]));
+  });
 
-    let title = "Unknown";
-    let pageUrl = "#";
+  itemMatches.forEach(itemMatch => {
+    const itemHtml = itemMatch[1];
+    const imageUrlMatch = itemHtml.match(/"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/);
+    if (imageUrlMatch) {
+      const imageUrl = imageUrlMatch[0].replace(/"/g, "");
+      const titleMatch = itemHtml.match(/<div class="Q6A6Dc ddBkwd">(.*?)<\/div>/);
+      const title = titleMatch ? titleMatch[1].replace(/<.*?>/g, "").trim() : "Unknown";
+      const pageUrl = pageUrlMap.get(encodeURIComponent(imageUrl)) || "#";
 
-    if (titleMatches[i]) {
-      title = titleMatches[i][1].trim(); // Ambil teks dalam <div class="Q6A6Dc ddBkwd">
+      results.push({ imageUrl, title, pageUrl });
     }
-
-    if (pageUrlMatches[i]) {
-      pageUrl = decodeURIComponent(pageUrlMatches[i][2]); // URL halaman sumber
-    }
-
-    results.push({ imageUrl, title, pageUrl });
-  }
+  });
 
   return results;
 }
 
-// Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
