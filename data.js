@@ -35,11 +35,10 @@ export default {
       // Konversi gambar ke Base64
       for (const image of images) {
         const resizedUrl = getCloudflareResizedUrl(image.url, 225);
-        const base64Data = await fetchBase64(resizedUrl);
 
         imageResults.push({
           original: image.url,
-          base64: base64Data,
+          base64: resizedUrl,
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl
@@ -62,23 +61,6 @@ export default {
 // Fungsi untuk mendapatkan URL gambar dari Cloudflare API
 function getCloudflareResizedUrl(imageUrl, width) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=70`;
-}
-
-// Fungsi untuk mengambil gambar dan mengonversinya menjadi Base64
-async function fetchBase64(imageUrl) {
-  try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error("Gagal mengambil gambar");
-
-    const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    
-    // Menentukan tipe MIME dari gambar
-    const mimeType = response.headers.get("content-type") || "image/jpeg";
-    return `data:${mimeType};base64,${base64}`;
-  } catch (error) {
-    return null; // Jika gagal, kembalikan null
-  }
 }
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
