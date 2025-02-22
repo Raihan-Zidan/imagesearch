@@ -35,7 +35,7 @@ export default {
       // Modifikasi untuk progressive image
       imageUrls = images.map(image => ({
         original: image.url,
-        thumbnail: getCloudflareResizedUrl(image.url, 100),   // Thumbnail kecil untuk efek progressive
+        thumbnail: getCloudflareResizedUrl(image.url, 500),   // Thumbnail kecil untuk efek progressive
         title: image.title,
         siteName: image.siteName,
         pageUrl: image.pageUrl
