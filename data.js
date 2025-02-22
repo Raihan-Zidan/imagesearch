@@ -23,7 +23,7 @@ export default {
       });
 
       if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Failed to fetch Google Images" }), {
+        return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
           status: response.status,
           headers: getCorsHeaders(),
         });
@@ -38,7 +38,7 @@ export default {
         headers: getCorsHeaders(),
       });
     } catch (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
         status: 500,
         headers: getCorsHeaders(),
       });
