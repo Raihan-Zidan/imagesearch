@@ -39,7 +39,7 @@ export default {
           
           return {
             original: image.url,
-            thumbnail: await convertBlobToBase64(thumbnailBlob),
+            thumbnail: thumbnailBlob,
             title: image.title,
             siteName: image.siteName,
             pageUrl: image.pageUrl
