@@ -31,7 +31,7 @@ export default {
         }
 
         const html = await response.text();
-        const images = await filterValidImages(extractImageData(html));
+        const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
         imageUrls = imageUrls.concat(images);
       }
 
@@ -47,25 +47,6 @@ export default {
     }
   },
 };
-
-async function filterValidImages(images) {
-  const validImages = [];
-  for (const image of images) {
-    if (await isImageLoadable(image.url)) {
-      validImages.push(image);
-    }
-  }
-  return validImages;
-}
-
-async function isImageLoadable(url) {
-  try {
-    const response = await fetch(url, { method: "HEAD" });
-    return response.ok && response.headers.get("Content-Type")?.startsWith("image");
-  } catch {
-    return false;
-  }
-}
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
@@ -85,10 +66,8 @@ function extractImageData(html) {
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
     };
-  });
+  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
-
-
 
 function getCorsHeaders() {
   return {
