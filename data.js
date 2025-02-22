@@ -45,11 +45,23 @@ export default {
 };
 
 // Fungsi untuk mengekstrak semua URL gambar dari HTML
-function extractAllImageUrls(html) {
-  const regex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
-  const matches = html.match(regex);
-  return matches ? matches.map(url => url.replace(/"/g, "")) : [];
+function extractImageData(html) {
+  const imageRegex = /"(https?:\\/\\/[^" ]+\\.(jpg|jpeg|png|gif|webp))"/g;
+  const titleRegex = /<div class=\"toI8Rb OSrXXb\"[^>]*>(.*?)<\/div>/g;
+
+  const imageMatches = [...html.matchAll(imageRegex)];
+  const titleMatches = [...html.matchAll(titleRegex)];
+
+  const images = imageMatches.map((match, index) => {
+    return {
+      url: match[1],
+      title: titleMatches[index] ? titleMatches[index][1] : "",
+    };
+  });
+
+  return images;
 }
+
 
 // Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
