@@ -28,12 +28,13 @@ export default {
       }
 
       const html = await response.text();
-      const images = extractImagesWithTitles(html);
+      const imageUrls = extractAllImageUrls(html);
 
-      return new Response(JSON.stringify({ images }), {
+      return new Response(JSON.stringify({ images: imageUrls }), {
         status: 200,
         headers: getCorsHeaders(),
       });
+
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
@@ -43,27 +44,12 @@ export default {
   },
 };
 
-// Fungsi untuk mengekstrak URL gambar dan judul dari HTML
-function extractImagesWithTitles(html) {
-  const imageRegex = /"https?:\/\/[^"']+\.(jpg|jpeg|png|gif|webp)"/g; // Fix syntax error
-  const matches = html.match(imageRegex);
-  const imageUrls = matches ? matches.map(url => url.replace(/"/g, "")) : [];
-
-  const domParser = new DOMParser();
-  const doc = domParser.parseFromString(html, "text/html");
-  const titleParents = doc.querySelectorAll(".toI8Rb.OSrXXb");
-
-  const titles = Array.from(titleParents).map(parent => {
-    const titleElement = parent.querySelector(".Q6A6Dc.ddBkwd");
-    return titleElement ? titleElement.textContent.trim() : "";
-  });
-
-  return imageUrls.map((url, index) => ({
-    url,
-    title: titles[index] || ""
-  }));
+// Fungsi untuk mengekstrak semua URL gambar dari HTML
+function extractAllImageUrls(html) {
+  const regex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
+  const matches = html.match(regex);
+  return matches ? matches.map(url => url.replace(/"/g, "")) : [];
 }
-
 
 // Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
