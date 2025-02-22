@@ -28,9 +28,9 @@ export default {
       }
 
       const html = await response.text();
-      const imageUrls = extractAllImageUrls(html);
+      const results = extractImageData(html);
 
-      return new Response(JSON.stringify({ images: imageUrls }), {
+      return new Response(JSON.stringify({ results }), {
         status: 200,
         headers: getCorsHeaders(),
       });
@@ -44,18 +44,38 @@ export default {
   },
 };
 
-// Fungsi untuk mengekstrak semua URL gambar dari HTML
-function extractAllImageUrls(html) {
-  const regex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
-  const matches = html.match(regex);
-  return matches ? matches.map(url => url.replace(/"/g, "")) : [];
+// Fungsi untuk mengekstrak data gambar + judul + URL halaman sumber
+function extractImageData(html) {
+  const imageRegex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
+  const titleUrlRegex = /<a href="\/imgres\?imgurl=(.*?)&amp;imgrefurl=(.*?)".*?>(.*?)<\/a>/g;
+
+  const imageMatches = html.match(imageRegex) || [];
+  const titleUrlMatches = [...html.matchAll(titleUrlRegex)];
+
+  let results = [];
+  
+  for (let i = 0; i < imageMatches.length; i++) {
+    const imageUrl = imageMatches[i].replace(/"/g, "");
+
+    let title = "Unknown";
+    let pageUrl = "#";
+
+    if (titleUrlMatches[i]) {
+      pageUrl = decodeURIComponent(titleUrlMatches[i][2]); // URL halaman sumber
+      title = titleUrlMatches[i][3].replace(/<.*?>/g, "").trim(); // Hapus tag HTML dalam judul
+    }
+
+    results.push({ imageUrl, title, pageUrl });
+  }
+
+  return results;
 }
 
 // Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*", // Mengizinkan semua domain
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
