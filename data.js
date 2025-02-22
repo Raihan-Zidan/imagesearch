@@ -11,9 +11,8 @@ export default {
       });
     }
 
-    let imageUrls = [];
-
     try {
+      // Ambil gambar dari Google Images
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
       const response = await fetch(searchUrl, {
         headers: {
@@ -30,29 +29,40 @@ export default {
       }
 
       const html = await response.text();
-      const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+      const images = extractImageData(html);
 
-      imageUrls = await Promise.all(
-        images.map(async (image) => {
-          const thumbnailUrl = getCloudflareResizedUrl(image.url, 300);
-          const thumbnailBlob = await fetch(thumbnailUrl).then(res => res.blob());
-          
-          return {
-            original: image.url,
-            thumbnail: thumbnailBlob,
-            title: image.title,
-            siteName: image.siteName,
-            pageUrl: image.pageUrl
-          };
-        })
-      );
+      if (images.length === 0) {
+        return new Response(JSON.stringify({ error: "Tidak ada gambar ditemukan." }), {
+          status: 404,
+          headers: getCorsHeaders(),
+        });
+      }
 
-      return new Response(JSON.stringify({ images: imageUrls }), {
+      // Pilih gambar pertama untuk ditampilkan sebagai Blob (contoh saja)
+      const firstImage = images[0];
+      const thumbnailUrl = thumbnailBlob(getCloudflareResizedUrl(firstImage.url, 300));
+
+      // Ambil gambar thumbnail dari Cloudflare Image Resizing
+      const imageResponse = await fetch(thumbnailUrl);
+      if (!imageResponse.ok) {
+        return new Response(JSON.stringify({ error: "Gagal mengambil gambar." }), {
+          status: imageResponse.status,
+          headers: getCorsHeaders(),
+        });
+      }
+
+      // Kirim gambar dalam bentuk Blob
+      return new Response(imageResponse.body, {
         status: 200,
-        headers: getCorsHeaders(),
+        headers: {
+          "Content-Type": imageResponse.headers.get("Content-Type") || "image/jpeg",
+          "Cache-Control": "public, max-age=3600",
+          "Access-Control-Allow-Origin": "*",
+        },
       });
+
     } catch (error) {
-      return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
+      return new Response(JSON.stringify({ error: "Terjadi kesalahan server." }), {
         status: 500,
         headers: getCorsHeaders(),
       });
@@ -60,12 +70,6 @@ export default {
   },
 };
 
-// Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
-function getCloudflareResizedUrl(imageUrl, width) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=50`;
-}
-
-// Fungsi untuk mengonversi Blob menjadi Base64
 async function convertBlobToBase64(blob) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -74,7 +78,12 @@ async function convertBlobToBase64(blob) {
   });
 }
 
-// Fungsi ekstraksi data gambar
+// 🔹 Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
+function getCloudflareResizedUrl(imageUrl, width) {
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=60&output=webp`;
+}
+
+// 🔹 Fungsi ekstraksi data gambar dari HTML hasil pencarian Google Images
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
@@ -93,10 +102,10 @@ function extractImageData(html) {
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
     };
-  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+  });
 }
 
-// Fungsi untuk mengatur CORS
+// 🔹 Fungsi untuk mengatur CORS
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
