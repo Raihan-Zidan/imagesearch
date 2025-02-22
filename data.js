@@ -2,6 +2,8 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     const query = url.searchParams.get("q");
+    const maxPages = 3; // Ambil 3 halaman (dapat disesuaikan)
+    const resultsPerPage = 20; // Biasanya Google Images menampilkan 20 gambar per halaman
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -10,30 +12,31 @@ export default {
       });
     }
 
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`;
+    let allImages = [];
 
     try {
-      const response = await fetch(searchUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://www.google.com/",
-        },
-      });
+      for (let i = 0; i < maxPages; i++) {
+        const start = i * resultsPerPage;
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
 
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Failed to fetch Google Images" }), {
-          status: response.status,
-          headers: getCorsHeaders(),
+        const response = await fetch(searchUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Referer": "https://www.google.com/",
+          },
         });
+
+        if (!response.ok) continue; // Skip jika gagal
+
+        const html = await response.text();
+        const imageData = extractImageData(html);
+        allImages = allImages.concat(imageData);
       }
 
-      const html = await response.text();
-      let imageData = extractImageData(html);
+      // Filter gambar valid
+      allImages = await filterValidImages(allImages);
 
-      // Periksa apakah gambar valid
-      imageData = await filterValidImages(imageData);
-
-      return new Response(JSON.stringify({ images: imageData }), {
+      return new Response(JSON.stringify({ images: allImages }), {
         status: 200,
         headers: getCorsHeaders(),
       });
