@@ -11,7 +11,7 @@ export default {
       });
     }
 
-    let imageUrls = [];
+    let imageResults = [];
 
     try {
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
@@ -23,7 +23,7 @@ export default {
       });
 
       if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
+        return new Response(JSON.stringify({ error: "Terjadi kesalahan saat mengambil gambar." }), {
           status: response.status,
           headers: getCorsHeaders(),
         });
@@ -32,21 +32,26 @@ export default {
       const html = await response.text();
       const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 
-      // Modifikasi untuk progressive image
-      imageUrls = images.map(image => ({
-        original: image.url,
-        thumbnail: getCloudflareResizedUrl(image.url, 200),
-        title: image.title,
-        siteName: image.siteName,
-        pageUrl: image.pageUrl
-      }));
+      // Konversi gambar ke Base64
+      for (const image of images) {
+        const resizedUrl = getCloudflareResizedUrl(image.url, 225);
+        const base64Data = await fetchBase64(resizedUrl);
 
-      return new Response(JSON.stringify({ images: imageUrls }), {
+        imageResults.push({
+          original: image.url,
+          base64: base64Data,
+          title: image.title,
+          siteName: image.siteName,
+          pageUrl: image.pageUrl
+        });
+      }
+
+      return new Response(JSON.stringify({ images: imageResults }), {
         status: 200,
         headers: getCorsHeaders(),
       });
     } catch (error) {
-      return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
+      return new Response(JSON.stringify({ error: "Terjadi kesalahan internal." }), {
         status: 500,
         headers: getCorsHeaders(),
       });
@@ -54,11 +59,29 @@ export default {
   },
 };
 
+// Fungsi untuk mendapatkan URL gambar dari Cloudflare API
 function getCloudflareResizedUrl(imageUrl, width) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=80`;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=70`;
 }
 
-// Fungsi ekstraksi data gambar
+// Fungsi untuk mengambil gambar dan mengonversinya menjadi Base64
+async function fetchBase64(imageUrl) {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error("Gagal mengambil gambar");
+
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    
+    // Menentukan tipe MIME dari gambar
+    const mimeType = response.headers.get("content-type") || "image/jpeg";
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    return null; // Jika gagal, kembalikan null
+  }
+}
+
+// Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
