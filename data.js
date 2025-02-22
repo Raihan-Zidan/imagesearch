@@ -37,8 +37,8 @@ export default {
         const resizedUrl = getCloudflareResizedUrl(image.url, 225);
 
         imageResults.push({
-          original: image.url,
-          base64: resizedUrl,
+          image: image.url,
+          thumbnail: resizedUrl,
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl
