@@ -45,31 +45,20 @@ export default {
 };
 
 function extractImageData(html) {
-  const imageRegex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
-  const pageUrlRegex = /<a href="\/imgres\?imgurl=(.*?)&amp;imgrefurl=(.*?)"/g;
   const itemRegex = /<div class="isv-r[^>]*>([\s\S]*?)<\/div>/g;
-
-  const imageMatches = html.match(imageRegex) || [];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
   const itemMatches = [...html.matchAll(itemRegex)];
 
   let results = [];
 
-  const pageUrlMap = new Map();
-  pageUrlMatches.forEach(match => {
-    pageUrlMap.set(decodeURIComponent(match[1]), decodeURIComponent(match[2]));
-  });
-
   itemMatches.forEach(itemMatch => {
     const itemHtml = itemMatch[1];
     const imageUrlMatch = itemHtml.match(/"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/);
-    if (imageUrlMatch) {
-      const imageUrl = imageUrlMatch[0].replace(/"/g, "");
-      const titleMatch = itemHtml.match(/<div class="Q6A6Dc ddBkwd">(.*?)<\/div>/);
-      const title = titleMatch ? titleMatch[1].replace(/<.*?>/g, "").trim() : "Unknown";
-      const pageUrl = pageUrlMap.get(encodeURIComponent(imageUrl)) || "#";
+    const titleMatch = itemHtml.match(/<div class="Q6A6Dc ddBkwd">(.*?)<\/div>/);
 
-      results.push({ imageUrl, title, pageUrl });
+    if (imageUrlMatch && titleMatch) {
+      const imageUrl = imageUrlMatch[0].replace(/"/g, "");
+      const title = titleMatch[1].replace(/<.*?>/g, "").trim();
+      results.push({ imageUrl, title });
     }
   });
 
