@@ -2,8 +2,8 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     const query = url.searchParams.get("q");
-    const maxPages = 3; // Ambil 3 halaman (dapat disesuaikan)
-    const resultsPerPage = 20; // Biasanya Google Images menampilkan 20 gambar per halaman
+    const maxPages = 3; // Ambil 3 halaman
+    const resultsPerPage = 20;
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -12,28 +12,34 @@ export default {
       });
     }
 
-    let allImages = [];
+    const variations = ["HD", "4K", "wallpaper", "photo", "best quality"];
+    const searchUrls = [];
+
+    // Buat semua URL pencarian
+    for (let i = 0; i < maxPages; i++) {
+      const start = i * resultsPerPage;
+      const randomVariation = variations[i % variations.length]; // Gunakan variasi bergantian
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query + " " + randomVariation)}&tbm=isch&start=${start}&tbs=isz:l`;
+      searchUrls.push(searchUrl);
+    }
 
     try {
-      for (let i = 0; i < maxPages; i++) {
-        const start = i * resultsPerPage;
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
+      // Fetch semua halaman secara paralel (lebih cepat)
+      const responses = await Promise.all(
+        searchUrls.map((url) =>
+          fetch(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+              "Referer": "https://www.google.com/",
+            },
+          }).then((res) => (res.ok ? res.text() : ""))
+        )
+      );
 
-        const response = await fetch(searchUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Referer": "https://www.google.com/",
-          },
-        });
+      // Ekstrak data dari semua halaman yang berhasil
+      let allImages = responses.flatMap((html) => (html ? extractImageData(html) : []));
 
-        if (!response.ok) continue; // Skip jika gagal
-
-        const html = await response.text();
-        const imageData = extractImageData(html);
-        allImages = allImages.concat(imageData);
-      }
-
-      // Filter gambar valid
+      // Filter gambar agar hanya yang valid yang dikembalikan
       allImages = await filterValidImages(allImages);
 
       return new Response(JSON.stringify({ images: allImages }), {
