@@ -28,9 +28,12 @@ export default {
       }
 
       const html = await response.text();
-      const imageUrls = extractImageData(html);
+      let imageData = extractImageData(html);
 
-      return new Response(JSON.stringify({ images: imageUrls }), {
+      // Periksa apakah gambar valid
+      imageData = await filterValidImages(imageData);
+
+      return new Response(JSON.stringify({ images: imageData }), {
         status: 200,
         headers: getCorsHeaders(),
       });
@@ -44,7 +47,7 @@ export default {
   },
 };
 
-
+// Fungsi untuk mengekstrak data gambar dari HTML
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
@@ -56,24 +59,37 @@ function extractImageData(html) {
   const siteNameMatches = [...html.matchAll(siteNameRegex)];
   const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
 
-  const images = imageMatches.map((match, index) => {
-    return {
-      url: match[1],
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
-    };
-  });
-
-  return images;
+  return imageMatches.map((match, index) => ({
+    url: match[1],
+    title: titleMatches[index] ? titleMatches[index][1] : "",
+    siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
+    pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+  }));
 }
 
+// Fungsi untuk memeriksa apakah gambar valid
+async function filterValidImages(images) {
+  const checkImage = async (image) => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000); // Timeout 3 detik
+      const response = await fetch(image.url, { method: "HEAD", signal: controller.signal });
+      clearTimeout(timeout);
+      return response.ok ? image : null; // Jika gambar valid, kembalikan objek image, jika tidak, kembalikan null
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const results = await Promise.all(images.map(checkImage));
+  return results.filter((img) => img !== null); // Hanya menyertakan gambar yang valid
+}
 
 // Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*", // Mengizinkan semua domain
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
