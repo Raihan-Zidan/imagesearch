@@ -31,7 +31,7 @@ export default {
         }
 
         const html = await response.text();
-        const images = extractImageData(html);
+        const images = await filterValidImages(extractImageData(html));
         imageUrls = imageUrls.concat(images);
       }
 
@@ -47,6 +47,25 @@ export default {
     }
   },
 };
+
+async function filterValidImages(images) {
+  const validImages = [];
+  for (const image of images) {
+    if (await isImageLoadable(image.url)) {
+      validImages.push(image);
+    }
+  }
+  return validImages;
+}
+
+async function isImageLoadable(url) {
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    return response.ok && response.headers.get("Content-Type")?.startsWith("image");
+  } catch {
+    return false;
+  }
+}
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
@@ -68,6 +87,8 @@ function extractImageData(html) {
     };
   });
 }
+
+
 
 function getCorsHeaders() {
   return {
