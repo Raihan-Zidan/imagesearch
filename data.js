@@ -6,12 +6,12 @@ export default {
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
         status: 400,
-        headers: getCorsHeaders(),
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`;
-
+    
     try {
       const response = await fetch(searchUrl, {
         headers: {
@@ -23,53 +23,30 @@ export default {
       if (!response.ok) {
         return new Response(JSON.stringify({ error: "Failed to fetch Google Images" }), {
           status: response.status,
-          headers: getCorsHeaders(),
+          headers: { "Content-Type": "application/json" },
         });
       }
 
       const html = await response.text();
-      const results = extractImageData(html);
+      const imageUrls = extractAllImageUrls(html);
 
-      return new Response(JSON.stringify({ results }), {
+      return new Response(JSON.stringify({ images: imageUrls }), {
         status: 200,
-        headers: getCorsHeaders(),
+        headers: { "Content-Type": "application/json" },
       });
 
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: getCorsHeaders(),
+        headers: { "Content-Type": "application/json" },
       });
     }
   },
 };
 
-function extractImageData(html) {
-  const itemRegex = /<div class="isv-r[^>]*>([\s\S]*?)<\/div>/g;
-  const itemMatches = [...html.matchAll(itemRegex)];
-
-  let results = [];
-
-  itemMatches.forEach(itemMatch => {
-    const itemHtml = itemMatch[1];
-    const imageUrlMatch = itemHtml.match(/"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/);
-    const titleMatch = itemHtml.match(/<div class="Q6A6Dc ddBkwd">(.*?)<\/div>/);
-
-    if (imageUrlMatch && titleMatch) {
-      const imageUrl = imageUrlMatch[0].replace(/"/g, "");
-      const title = titleMatch[1].replace(/<.*?>/g, "").trim();
-      results.push({ imageUrl, title });
-    }
-  });
-
-  return results;
-}
-
-function getCorsHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
+// Fungsi untuk mengekstrak semua URL gambar dari HTML
+function extractAllImageUrls(html) {
+  const regex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
+  const matches = html.match(regex);
+  return matches ? matches.map(url => url.replace(/"/g, "")) : [];
 }
