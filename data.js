@@ -40,7 +40,7 @@ export default {
 
       // Pilih gambar pertama untuk ditampilkan sebagai Blob (contoh saja)
       const firstImage = images[0];
-      const thumbnailUrl = thumbnailBlob(getCloudflareResizedUrl(firstImage.url, 300));
+      const thumbnailUrl = getCloudflareResizedUrl(firstImage.url, 300);
 
       // Ambil gambar thumbnail dari Cloudflare Image Resizing
       const imageResponse = await fetch(thumbnailUrl);
@@ -70,17 +70,9 @@ export default {
   },
 };
 
-async function convertBlobToBase64(blob) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.readAsDataURL(blob);
-  });
-}
-
 // 🔹 Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
 function getCloudflareResizedUrl(imageUrl, width) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=60&output=webp`;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=60`;
 }
 
 // 🔹 Fungsi ekstraksi data gambar dari HTML hasil pencarian Google Images
