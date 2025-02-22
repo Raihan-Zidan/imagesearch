@@ -44,25 +44,30 @@ export default {
   },
 };
 
-// Fungsi untuk mengekstrak data gambar + judul + URL halaman sumber
+// Fungsi untuk mengekstrak gambar + judul + URL halaman sumber
 function extractImageData(html) {
   const imageRegex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
-  const titleUrlRegex = /<a href="\/imgres\?imgurl=(.*?)&amp;imgrefurl=(.*?)".*?>(.*?)<\/a>/g;
+  const titleRegex = /<div class="Q6A6Dc ddBkwd">([^<]+)<\/div>/g;
+  const pageUrlRegex = /<a href="\/imgres\?imgurl=(.*?)&amp;imgrefurl=(.*?)"/g;
 
   const imageMatches = html.match(imageRegex) || [];
-  const titleUrlMatches = [...html.matchAll(titleUrlRegex)];
+  const titleMatches = [...html.matchAll(titleRegex)];
+  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
 
   let results = [];
-  
+
   for (let i = 0; i < imageMatches.length; i++) {
     const imageUrl = imageMatches[i].replace(/"/g, "");
 
     let title = "Unknown";
     let pageUrl = "#";
 
-    if (titleUrlMatches[i]) {
-      pageUrl = decodeURIComponent(titleUrlMatches[i][2]); // URL halaman sumber
-      title = titleUrlMatches[i][3].replace(/<.*?>/g, "").trim(); // Hapus tag HTML dalam judul
+    if (titleMatches[i]) {
+      title = titleMatches[i][1].trim(); // Ambil teks dalam <div class="Q6A6Dc ddBkwd">
+    }
+
+    if (pageUrlMatches[i]) {
+      pageUrl = decodeURIComponent(pageUrlMatches[i][2]); // URL halaman sumber
     }
 
     results.push({ imageUrl, title, pageUrl });
