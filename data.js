@@ -32,14 +32,20 @@ export default {
       const html = await response.text();
       const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 
-      // Modifikasi untuk progressive image
-      imageUrls = images.map(image => ({
-        original: image.url,
-        thumbnail: getCloudflareResizedUrl(image.url, 300),   // Thumbnail kecil untuk efek progressive
-        title: image.title,
-        siteName: image.siteName,
-        pageUrl: image.pageUrl
-      }));
+      imageUrls = await Promise.all(
+        images.map(async (image) => {
+          const thumbnailUrl = getCloudflareResizedUrl(image.url, 300);
+          const thumbnailBlob = await fetch(thumbnailUrl).then(res => res.blob());
+          
+          return {
+            original: image.url,
+            thumbnail: await convertBlobToBase64(getCloudflareResizedUrl(thumbnailBlob, 300)),
+            title: image.title,
+            siteName: image.siteName,
+            pageUrl: image.pageUrl
+          };
+        })
+      );
 
       return new Response(JSON.stringify({ images: imageUrls }), {
         status: 200,
@@ -56,7 +62,16 @@ export default {
 
 // Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
 function getCloudflareResizedUrl(imageUrl, width) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=60`;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=50`;
+}
+
+// Fungsi untuk mengonversi Blob menjadi Base64
+async function convertBlobToBase64(blob) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
 }
 
 // Fungsi ekstraksi data gambar
