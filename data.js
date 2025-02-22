@@ -73,9 +73,17 @@ async function filterValidImages(images) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 3000); // Timeout 3 detik
+
       const response = await fetch(image.url, { method: "HEAD", signal: controller.signal });
       clearTimeout(timeout);
-      return response.ok ? image : null; // Jika gambar valid, kembalikan objek image, jika tidak, kembalikan null
+
+      // Pastikan gambar bisa dimuat dan memiliki "Content-Type" yang valid
+      const contentType = response.headers.get("Content-Type");
+      if (!response.ok || !contentType || !contentType.startsWith("image/")) {
+        return null;
+      }
+
+      return image;
     } catch (error) {
       return null;
     }
