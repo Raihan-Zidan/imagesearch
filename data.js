@@ -1,56 +1,25 @@
-import sharp from "sharp";
-
 export default {
   async fetch(request) {
     const url = new URL(request.url);
-    const query = url.searchParams.get("q");
-    const start = parseInt(url.searchParams.get("start")) || 0;
-
-    if (!query) {
-      return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
+    const imageUrl = url.searchParams.get("img");
+    
+    if (!imageUrl) {
+      return new Response(JSON.stringify({ error: "Parameter 'img' diperlukan" }), {
         status: 400,
         headers: getCorsHeaders(),
       });
     }
 
-    let imageUrls = [];
-
     try {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
-      const response = await fetch(searchUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://www.google.com/",
-        },
-      });
-
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
-          status: response.status,
-          headers: getCorsHeaders(),
-        });
-      }
-
-      const html = await response.text();
-      const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
-
-      for (let image of images) {
-        try {
-          const compressedImageBuffer = await compressImage(image.url);
-          image.compressedUrl = `data:image/jpeg;base64,${compressedImageBuffer.toString('base64')}`;
-        } catch (error) {
-          console.error("Gagal mengompresi gambar:", error);
-        }
-      }
-
-      imageUrls = imageUrls.concat(images);
-
-      return new Response(JSON.stringify({ images: imageUrls }), {
+      const compressedImage = await compressImage(imageUrl);
+      
+      return new Response(JSON.stringify({ compressedImage }), {
         status: 200,
         headers: getCorsHeaders(),
       });
+
     } catch (error) {
-      return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
+      return new Response(JSON.stringify({ error: "Gagal mengompresi gambar" }), {
         status: 500,
         headers: getCorsHeaders(),
       });
@@ -61,32 +30,40 @@ export default {
 async function compressImage(imageUrl) {
   const response = await fetch(imageUrl);
   if (!response.ok) throw new Error("Gagal mengambil gambar");
-  const buffer = await response.arrayBuffer();
 
-  return sharp(Buffer.from(buffer))
-    .jpeg({ quality: 50 }) // Mengurangi kualitas menjadi 50%
-    .toBuffer();
-}
-
-function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
-  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
-
-  const imageMatches = [...html.matchAll(imageRegex)];
-  const titleMatches = [...html.matchAll(titleRegex)];
-  const siteNameMatches = [...html.matchAll(siteNameRegex)];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
-
-  return imageMatches.map((match, index) => {
-    return {
-      url: match[1],
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+  const imageBlob = await response.blob();
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(imageBlob);
+    
+    reader.onload = () => {
+      const img = new Image();
+      img.src = reader.result;
+      
+      img.onload = () => {
+        const canvas = new OffscreenCanvas(100, 100); // Resolusi kecil (100x100)
+        const ctx = canvas.getContext("2d");
+        
+        canvas.width = 100;
+        canvas.height = 100;
+        
+        ctx.drawImage(img, 0, 0, 100, 100);
+        
+        canvas.convertToBlob({ type: "image/jpeg", quality: 0.5 }).then(blob => {
+          const reader2 = new FileReader();
+          reader2.readAsDataURL(blob);
+          
+          reader2.onload = () => resolve(reader2.result);
+          reader2.onerror = reject;
+        });
+      };
+      
+      img.onerror = reject;
     };
-  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+
+    reader.onerror = reject;
+  });
 }
 
 function getCorsHeaders() {
