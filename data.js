@@ -28,7 +28,7 @@ export default {
       }
 
       const html = await response.text();
-      const imageUrls = extractAllImageUrls(html);
+      const imageUrls = extractImageData(html);
 
       return new Response(JSON.stringify({ images: imageUrls }), {
         status: 200,
