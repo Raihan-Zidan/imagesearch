@@ -2,6 +2,7 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     const query = url.searchParams.get("q");
+    const start = parseInt(url.searchParams.get("start")) || 0;
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -10,30 +11,27 @@ export default {
       });
     }
 
-    const startValues = [0, 10, 20, 30];
     let imageUrls = [];
 
     try {
-      for (const start of startValues) {
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
-        const response = await fetch(searchUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Referer": "https://www.google.com/",
-          },
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
+      const response = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "Referer": "https://www.google.com/",
+        },
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: "Failed to fetch Google Images" }), {
+          status: response.status,
+          headers: getCorsHeaders(),
         });
-
-        if (!response.ok) {
-          return new Response(JSON.stringify({ error: "Failed to fetch Google Images" }), {
-            status: response.status,
-            headers: getCorsHeaders(),
-          });
-        }
-
-        const html = await response.text();
-        const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
-        imageUrls = imageUrls.concat(images);
       }
+
+      const html = await response.text();
+      const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+      imageUrls = imageUrls.concat(images);
 
       return new Response(JSON.stringify({ images: imageUrls }), {
         status: 200,
