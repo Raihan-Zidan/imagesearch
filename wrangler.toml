@@ -1,0 +1,10 @@
+name = "datasearch"
+main = "data.js"
+
+compatibility_date = "2025-02-16"
+
+[miniflare]
+log_level = "debug"
+
+[vars]
+LOGGING = "true"
