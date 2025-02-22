@@ -56,7 +56,7 @@ export default {
 
 // Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
 function getCloudflareResizedUrl(imageUrl, width) {
-  return https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=60;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=60`;
 }
 
 // Fungsi ekstraksi data gambar
