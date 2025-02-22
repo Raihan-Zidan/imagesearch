@@ -28,13 +28,12 @@ export default {
       }
 
       const html = await response.text();
-      const imageData = extractImageData(html);
+      const images = extractImagesWithTitles(html);
 
-      return new Response(JSON.stringify({ images: imageData }), {
+      return new Response(JSON.stringify({ images }), {
         status: 200,
         headers: getCorsHeaders(),
       });
-
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
@@ -45,19 +44,28 @@ export default {
 };
 
 // Fungsi untuk mengekstrak URL gambar dan judul dari HTML
-function extractImageData(html) {
-  const regex = /<img.*?src="(https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp))".*?alt="([^"]*)"/gi;
-  let matches;
-  const imageData = [];
+function extractImagesWithTitles(html) {
+  const imageRegex = /"https?:\\/\\/[^"']+\.(jpg|jpeg|png|gif|webp)"/g;
+  const matches = html.match(imageRegex);
+  const imageUrls = matches ? matches.map(url => url.replace(/"/g, "")) : [];
 
-  while ((matches = regex.exec(html)) !== null) {
-    imageData.push({
-      url: matches[1],
-      title: matches[2],
-    });
-  }
+  const domParser = new DOMParser();
+  const doc = domParser.parseFromString(html, "text/html");
+  const titleParents = doc.querySelectorAll(".toI8Rb.OSrXXb");
 
-  return imageData;
+  const titles = Array.from(titleParents).map(parent => {
+    const titleElement = parent.querySelector(".Q6A6Dc.ddBkwd");
+    return titleElement ? titleElement.textContent.trim() : "";
+  });
+
+  const images = imageUrls.map((url, index) => {
+    return {
+      url,
+      title: titles[index] || ""
+    };
+  });
+
+  return images;
 }
 
 // Fungsi untuk menambahkan header CORS
