@@ -47,15 +47,18 @@ export default {
 // Fungsi untuk mengekstrak semua URL gambar dari HTML
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const titleRegex = /<div class=\"toI8Rb OSrXXb\"[^>]*>(.*?)<\/div>/g;
+  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
+  const siteNameRegex = /<div class="guK3rf cHaqb".*?>.*?<span.*?>(.*?)<\/span>/g;
 
   const imageMatches = [...html.matchAll(imageRegex)];
   const titleMatches = [...html.matchAll(titleRegex)];
+  const siteNameMatches = [...html.matchAll(siteNameRegex)];
 
   const images = imageMatches.map((match, index) => {
     return {
       url: match[1],
       title: titleMatches[index] ? titleMatches[index][1] : "",
+      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
     };
   });
 
