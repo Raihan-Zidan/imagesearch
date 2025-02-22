@@ -35,7 +35,6 @@ export default {
       // Modifikasi untuk progressive image
       imageUrls = images.map(image => ({
         original: image.url,
-        progressive: getCloudflareResizedUrl(image.url, 800),  // Gambar ukuran sedang
         thumbnail: getCloudflareResizedUrl(image.url, 100),   // Thumbnail kecil untuk efek progressive
         title: image.title,
         siteName: image.siteName,
@@ -57,7 +56,7 @@ export default {
 
 // Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
 function getCloudflareResizedUrl(imageUrl, width) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=75&output=webp`;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=75`;
 }
 
 // Fungsi ekstraksi data gambar
