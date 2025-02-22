@@ -31,7 +31,16 @@ export default {
 
       const html = await response.text();
       const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
-      imageUrls = imageUrls.concat(images);
+
+      // Modifikasi untuk progressive image
+      imageUrls = images.map(image => ({
+        original: image.url,
+        progressive: getCloudflareResizedUrl(image.url, 800),  // Gambar ukuran sedang
+        thumbnail: getCloudflareResizedUrl(image.url, 100),   // Thumbnail kecil untuk efek progressive
+        title: image.title,
+        siteName: image.siteName,
+        pageUrl: image.pageUrl
+      }));
 
       return new Response(JSON.stringify({ images: imageUrls }), {
         status: 200,
@@ -46,6 +55,12 @@ export default {
   },
 };
 
+// Fungsi untuk mengubah gambar menjadi progressive (menggunakan Cloudflare Image Resizing)
+function getCloudflareResizedUrl(imageUrl, width) {
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=${width}&q=75&output=webp`;
+}
+
+// Fungsi ekstraksi data gambar
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
@@ -67,6 +82,7 @@ function extractImageData(html) {
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
+// Fungsi untuk mengatur CORS
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
