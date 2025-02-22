@@ -46,20 +46,9 @@ export default {
 
 // Fungsi untuk mengekstrak semua URL gambar dari HTML
 function extractAllImageUrls(html) {
-  const imageRegex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
-  const classRegex = /Q6A6Dc\s+ddBkwd/;
-
-  // Ambil semua URL gambar
-  const imageMatches = html.match(imageRegex);
-  const imageUrls = imageMatches ? imageMatches.map(url => url.replace(/"/g, "")) : [];
-
-  // Cek apakah class "Q6A6Dc ddBkwd" ada dalam HTML
-  const containsTargetClass = classRegex.test(html);
-
-  return {
-    imageUrls,
-    containsTargetClass
-  };
+  const regex = /"https?:\/\/[^"]+\.(jpg|jpeg|png|gif|webp)"/g;
+  const matches = html.match(regex);
+  return matches ? matches.map(url => url.replace(/"/g, "")) : [];
 }
 
 // Fungsi untuk menambahkan header CORS
