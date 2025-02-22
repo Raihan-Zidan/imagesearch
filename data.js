@@ -68,9 +68,6 @@ function extractImageData(html) {
   return images;
 }
 
-  return images;
-}
-
 
 // Fungsi untuk menambahkan header CORS
 function getCorsHeaders() {
