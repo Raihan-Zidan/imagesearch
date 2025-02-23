@@ -37,7 +37,7 @@ export default {
 
         imageResults.push({
           image: image.url,
-          thumbnail: resizedUrl,
+          thumbnail: image.thumbnail,
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl
@@ -65,11 +65,13 @@ function getCloudflareResizedUrl(imageUrl, width) {
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const thumbnailRegex = /<img[^>]+class="[^"]*\bYQ4gaf\b[^"]*"[^>]+src="(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
 
   const imageMatches = [...html.matchAll(imageRegex)];
+  const thumbnailMatches = [...html.matchAll(thumbnailRegex)];
   const titleMatches = [...html.matchAll(titleRegex)];
   const siteNameMatches = [...html.matchAll(siteNameRegex)];
   const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
@@ -77,12 +79,14 @@ function extractImageData(html) {
   return imageMatches.map((match, index) => {
     return {
       url: match[1],
+      thumbnail: thumbnailMatches[index] ? thumbnailMatches[index][1] : "",
       title: titleMatches[index] ? titleMatches[index][1] : "",
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
     };
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
+
 
 // Fungsi untuk mengatur CORS
 function getCorsHeaders() {
