@@ -65,13 +65,15 @@ function getCloudflareResizedUrl(imageUrl, width) {
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const thumbnailRegex = /<img\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bYQ4gaf\b)[^>]*>/gi;
+  // Tambahkan capturing group untuk src
+  const thumbnailRegex = /<img\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bYQ4gaf\b)(?=[^>]*\bsrc\s*=\s*["']([^"']+)["'])[^>]*>/gi;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
 
+  // Gunakan matchAll untuk mendapatkan match yang memiliki grup
   const imageMatches = [...html.matchAll(imageRegex)];
-  const thumbnailMatch = html.match(thumbnailRegex);
+  const thumbnailMatches = [...html.matchAll(thumbnailRegex)];
   const titleMatches = [...html.matchAll(titleRegex)];
   const siteNameMatches = [...html.matchAll(siteNameRegex)];
   const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
@@ -79,13 +81,15 @@ function extractImageData(html) {
   return imageMatches.map((match, index) => {
     return {
       url: match[1],
-      thumbnail: thumbnailMatch[index] ? thumbnailMatch[index][1] : "",
+      // Mengambil group pertama dari thumbnailMatches
+      thumbnail: thumbnailMatches[index] ? thumbnailMatches[index][1] : "",
       title: titleMatches[index] ? titleMatches[index][1] : "",
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
     };
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
+
 
 
 
