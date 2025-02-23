@@ -49,7 +49,7 @@ export default {
         headers: getCorsHeaders(),
       });
     } catch (error) {
-      return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}~ }), {
+      return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
         status: 500,
         headers: getCorsHeaders(),
       });
