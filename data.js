@@ -36,6 +36,7 @@ export default {
 
       for (const image of images) {
         const resizedUrl = getCloudflareResizedUrl(image.url);
+        const dimensions = await getImageDimensions(image.url);
 
         imageResults.push({
           image: image.url,
@@ -43,6 +44,8 @@ export default {
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
+          width: dimensions?.width || null,
+          height: dimensions?.height || null,
         });
       }
 
@@ -62,6 +65,40 @@ export default {
 // Fungsi untuk mendapatkan URL gambar dari Cloudflare API
 function getCloudflareResizedUrl(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=50`;
+}
+
+// Fungsi untuk mendapatkan dimensi gambar dengan membaca header file (tanpa memuat seluruh gambar)
+async function getImageDimensions(imageUrl) {
+  try {
+    const response = await fetch(imageUrl, { headers: { Range: "bytes=0-32" } });
+    if (!response.ok) return null;
+
+    const buffer = await response.arrayBuffer();
+    const view = new DataView(buffer);
+
+    let width, height;
+
+    if (view.getUint32(0, false) === 0x89504e47) { // PNG
+      width = view.getUint32(16, false);
+      height = view.getUint32(20, false);
+    } else if (view.getUint16(0, false) === 0xffd8) { // JPEG
+      let offset = 2;
+      while (offset < view.byteLength) {
+        if (view.getUint16(offset, false) === 0xffc0) { // Start of Frame (SOF0)
+          height = view.getUint16(offset + 3, false);
+          width = view.getUint16(offset + 5, false);
+          break;
+        }
+        offset += view.getUint16(offset + 2, false) + 2;
+      }
+    } else {
+      return null;
+    }
+
+    return { width, height };
+  } catch (error) {
+    return null;
+  }
 }
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
