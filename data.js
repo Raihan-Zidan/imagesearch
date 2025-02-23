@@ -30,7 +30,7 @@ export default {
       }
 
       const html = await response.text();
-      images = images.filter(image => 
+      images = extractImageData(html).filter(image => 
         !/^https?:\/\/cdn[0-9]-production-images-kly\.akamaized\.net\//.test(image.url)
       );
 
