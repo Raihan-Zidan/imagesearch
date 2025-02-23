@@ -31,8 +31,7 @@ export default {
 
       const html = await response.text();
       const images = extractImageData(html).filter(image => 
-        image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png" && 
-        image.url !== "https://cdn1-production-images-kly.akamaized.net/thumbor-fallback-image.gif"
+        image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png"
       );
 
       for (const image of images) {
