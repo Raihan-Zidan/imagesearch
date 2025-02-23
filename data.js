@@ -30,7 +30,9 @@ export default {
       }
 
       const html = await response.text();
-      const images = extractImageData(html).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+      images = images.filter(image => 
+        !/^https?:\/\/cdn[0-9]-production-images-kly\.akamaized\.net\//.test(image.url)
+      );
 
       for (const image of images) {
         const resizedUrl = getCloudflareResizedUrl(image.url, 225);
