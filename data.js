@@ -61,7 +61,7 @@ export default {
 
 // Fungsi untuk mendapatkan URL gambar dari Cloudflare API
 function getCloudflareResizedUrl(imageUrl, width) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=${width}&q=50`;
+  return `https://search.pstatic.net/sunny/?src=${encodeURIComponent(imageUrl)}&type=a340`;
 }
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
