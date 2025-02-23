@@ -23,7 +23,7 @@ export default {
       });
 
       if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Terjadi kesalahan saat mengambil gambar." }), {
+        return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
           status: response.status,
           headers: getCorsHeaders(),
         });
@@ -49,7 +49,7 @@ export default {
         headers: getCorsHeaders(),
       });
     } catch (error) {
-      return new Response(JSON.stringify({ error: "Terjadi kesalahan internal." }), {
+      return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}~ }), {
         status: 500,
         headers: getCorsHeaders(),
       });
