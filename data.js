@@ -35,14 +35,16 @@ export default {
       );
 
       for (const image of images) {
-        const resizedUrl = getCloudflareResizedUrl(image.url, 225);
+        const resizedUrl = getCloudflareResizedUrl(image.url);
+        const { width, height } = await getImageSize(image.url);
 
         imageResults.push({
           image: image.url,
           thumbnail: resizedUrl,
           title: image.title,
           siteName: image.siteName,
-          pageUrl: image.pageUrl
+          pageUrl: image.pageUrl,
+          imageSize: [width, height],
         });
       }
 
@@ -59,8 +61,22 @@ export default {
   },
 };
 
+// Fungsi untuk mendapatkan ukuran gambar sebelum dimuat
+async function getImageSize(imageUrl) {
+  return new Promise((resolve) => {
+    let img = new Image();
+    img.onload = function () {
+      resolve({ width: this.width, height: this.height });
+    };
+    img.onerror = function () {
+      resolve({ width: null, height: null });
+    };
+    img.src = imageUrl;
+  });
+}
+
 // Fungsi untuk mendapatkan URL gambar dari Cloudflare API
-function getCloudflareResizedUrl(imageUrl, width) {
+function getCloudflareResizedUrl(imageUrl) {
   return `https://search.pstatic.net/sunny/?src=${encodeURIComponent(imageUrl)}&type=a340`;
 }
 
