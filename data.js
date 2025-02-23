@@ -65,7 +65,7 @@ function getCloudflareResizedUrl(imageUrl, width) {
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const thumbnailRegex = /<img[^>]+id="dimg_5YK6Z6nGKZnH4-EP7feqgQo_213"[^>]+src="(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const thumbnailRegex = /<img\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bYQ4gaf\b)[^>]*>/gi;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
@@ -79,7 +79,7 @@ function extractImageData(html) {
   return imageMatches.map((match, index) => {
     return {
       url: match[1],
-      thumbnail: thumbnailMatch ? thumbnailMatch[1] : "",
+      thumbnail: thumbnailMatch[index] ? thumbnailMatch[index][1] : "",
       title: titleMatches[index] ? titleMatches[index][1] : "",
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
