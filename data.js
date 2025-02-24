@@ -1,8 +1,16 @@
 export default {
   async fetch(request) {
     const url = new URL(request.url);
+
+    // Bypass request favicon.ico agar tidak error
+    if (url.pathname === "/favicon.ico") {
+      return new Response(null, { status: 204 }); // No Content
+    }
+
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
+
+    console.log("Query diterima:", query);
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -30,30 +38,28 @@ export default {
       }
 
       const html = await response.text();
-      const images = extractImageData(html).filter(image => 
-        !/^https?:\/\/cdn[0-9]-production-images-kly\.akamaized\.net\//.test(image.url)
-      );
+      const images = extractImageData(html);
 
       for (const image of images) {
         const resizedUrl = getCloudflareResizedUrl(image.url);
-        const dimensions = await getImageDimensions(image.url);
-
         imageResults.push({
           image: image.url,
           thumbnail: resizedUrl,
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
-          width: dimensions?.width || null,
-          height: dimensions?.height || null,
         });
       }
 
-      return new Response(JSON.stringify({ images: imageResults }), {
+      console.log("Response JSON:", { query, images: imageResults });
+
+      return new Response(JSON.stringify({ query, images: imageResults }), {
         status: 200,
         headers: getCorsHeaders(),
       });
+
     } catch (error) {
+      console.error("Error:", error);
       return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
         status: 500,
         headers: getCorsHeaders(),
@@ -64,41 +70,7 @@ export default {
 
 // Fungsi untuk mendapatkan URL gambar dari Cloudflare API
 function getCloudflareResizedUrl(imageUrl) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=50`;
-}
-
-// Fungsi untuk mendapatkan dimensi gambar dengan membaca header file (tanpa memuat seluruh gambar)
-async function getImageDimensions(imageUrl) {
-  try {
-    const response = await fetch(imageUrl, { headers: { Range: "bytes=0-32" } });
-    if (!response.ok) return null;
-
-    const buffer = await response.arrayBuffer();
-    const view = new DataView(buffer);
-
-    let width, height;
-
-    if (view.getUint32(0, false) === 0x89504e47) { // PNG
-      width = view.getUint32(16, false);
-      height = view.getUint32(20, false);
-    } else if (view.getUint16(0, false) === 0xffd8) { // JPEG
-      let offset = 2;
-      while (offset < view.byteLength) {
-        if (view.getUint16(offset, false) === 0xffc0) { // Start of Frame (SOF0)
-          height = view.getUint16(offset + 3, false);
-          width = view.getUint16(offset + 5, false);
-          break;
-        }
-        offset += view.getUint16(offset + 2, false) + 2;
-      }
-    } else {
-      return null;
-    }
-
-    return { width, height };
-  } catch (error) {
-    return null;
-  }
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
 }
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
@@ -128,7 +100,7 @@ function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
 }
