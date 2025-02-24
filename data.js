@@ -127,7 +127,7 @@ function extractImageData(html) {
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
-function extractNewsTitles(html) {
+function extractNewsData(html) {
   // Regex untuk menangkap inner text dari div yang berisi judul berita
   const titleRegex = /<div[^>]*class=["'][^"']*n0jPhd[^"']*["'][^>]*>(.*?)<\/div>/g;
   
