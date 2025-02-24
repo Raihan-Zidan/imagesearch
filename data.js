@@ -49,6 +49,7 @@ export default {
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
+          imageTitle: image.imageTitle,
         });
       }
 
@@ -84,7 +85,7 @@ function getCloudflareResizedUrl(imageUrl) {
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const imageRegex = /<img[^>]+src="(https?:\\/\\/[^" ]+\.(jpg|jpeg|png|gif|webp))"[^>]+alt="([^"]*)"[^>]*>/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
@@ -100,6 +101,7 @@ function extractImageData(html) {
       title: titleMatches[index] ? titleMatches[index][1] : "",
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+      imageTitle: match[3] || "",
     };
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
