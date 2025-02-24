@@ -93,8 +93,8 @@ async function fetchNews(query) {
     const sethtml = function(t) {
       return t;
     };
-    const news = extractNewsData(html);
-      return new Response(sethtml({ html }), {
+    const htmlContent = ({ html }) => `${html}`;
+      return new Response(htmlContent({ html }), {
         status: 200,
         headers: getCorsHeaders(),
       });
