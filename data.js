@@ -90,9 +90,11 @@ async function fetchNews(query) {
 
     if (!response.ok) throw new Error("Failed to fetch news");
     const html = await response.text();
-    
+    const sethtml = function(t) {
+      return t;
+    };
     const news = extractNewsData(html);
-      return new Response(JSON.stringify({ query, items: news }), {
+      return new Response(sethtml({ html }), {
         status: 200,
         headers: getCorsHeaders(),
       });
