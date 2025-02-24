@@ -129,11 +129,11 @@ function extractImageData(html) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<div[^>]*class="[^"]*n0jPhd[^"]*"[^>]*>(.*?)<\/div>/s;
+  const newsRegex = /<div[^>]*class="[^"]*n0jPhd[^"]*"[^>]*>(.*?)<\/div>/gs; // Tambahkan 'g' untuk global match
   const newsMatches = [...html.matchAll(newsRegex)];
 
   return newsMatches.map(match => ({
-    title: match[1] || "wokwko"
+    title: match[1]?.trim() || "wokwko" // Pastikan hasilnya bersih
   }));
 }
 
