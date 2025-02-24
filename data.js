@@ -30,29 +30,52 @@ export default {
 };
 
 async function fetchImages(query, start) {
-  try {
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
-    const response = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://www.google.com/",
-      },
-    });
+    let imageResults = [];
+    try {
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
+      const response = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "Referer": "https://www.google.com/",
+        },
+      });
 
-    if (!response.ok) throw new Error("Failed to fetch images");
-    const html = await response.text();
-    const images = extractImageData(html);
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
+          status: response.status,
+          headers: getCorsHeaders(),
+        });
+      }
 
-    return new Response(JSON.stringify({ query, images }), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: getCorsHeaders(),
-    });
-  }
+      const html = await response.text();
+      const images = extractImageData(html);
+
+      for (const image of images) {
+        const secureUrl = ensureHttps(image.url);
+        const resizedUrl = getCloudflareResizedUrl(secureUrl);
+        imageResults.push({
+          image: secureUrl,
+          thumbnail: resizedUrl,
+          title: image.title,
+          siteName: image.siteName,
+          pageUrl: image.pageUrl,
+        });
+      }
+
+      console.log("Response JSON:", { query, images: imageResults });
+
+      return new Response(JSON.stringify({ query, images: imageResults }), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
+
+    } catch (error) {
+      console.error("Error:", error);
+      return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
+        status: 500,
+        headers: getCorsHeaders(),
+      });
+    }
 }
 
 async function fetchNews(query) {
@@ -80,6 +103,8 @@ async function fetchNews(query) {
     });
   }
 }
+
+
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
@@ -112,8 +137,16 @@ function extractNewsTitles(html) {
   return titles;
 }
 
+function getCloudflareResizedUrl(imageUrl) {
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
+}
+
+
 function ensureHttps(url) {
-  return url.startsWith("http://") ? url.replace("http://", "https://") : url;
+  if (url.startsWith("http://")) {
+    return url.replace("http://", "https://");
+  }
+  return url;
 }
 
 function getCorsHeaders() {
