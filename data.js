@@ -80,7 +80,7 @@ async function fetchImages(query, start) {
 
 async function fetchNews(query) {
   try {
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=nws`;
+    const searchUrl = `https://www.google.com/search?q=what is minecraft`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
