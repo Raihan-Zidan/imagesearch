@@ -93,7 +93,7 @@ async function fetchNews(query) {
     
     const news = extractNewsData(html);
 
-    return new Response(JSON.stringify({ html }), {
+    return new Response(JSON.stringify({ news }), {
       status: 200,
       headers: getCorsHeaders(),
     });
@@ -129,11 +129,11 @@ function extractImageData(html) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<div[^>]+aria-level="3"[^>]+role="heading"[^>]*>(.*?)<\/div>/gs;
+  const newsRegex = /<div[^>]*class="[^"]*n0jPhd[^"]*"[^>]*>(.*?)<\/div>/s;
   const newsMatches = [...html.matchAll(newsRegex)];
 
   return newsMatches.map(match => ({
-    title: match[1].replace(/<[^>]+>/g, '').trim() // Bersihkan tag HTML jika ada
+    title: match[1] || "wokwko"
   }));
 }
 
