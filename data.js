@@ -127,7 +127,7 @@ function extractImageData(html) {
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
-function extractGoogleNews(html) {
+function extractNewsData(html) {
   const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
 
   const matches = [...html.matchAll(newsRegex)];
