@@ -85,8 +85,8 @@ function getCloudflareResizedUrl(imageUrl) {
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const imageRegex = /"(https?:\\/\\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const altRegex = /<img[^>]+src="(https?:\\/\\/[^" ]+\.(jpg|jpeg|png|gif|webp))"[^>]+alt="([^"]*)"[^>]*>/g;
+  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const altRegex = /<img[^>]+src="(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"[^>]+alt="([^"]*)"[^>]*>/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
