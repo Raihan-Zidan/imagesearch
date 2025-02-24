@@ -1,3 +1,5 @@
+import { JSDOM } from "jsdom";
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -85,28 +87,17 @@ function getCloudflareResizedUrl(imageUrl) {
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const altRegex = /<img[^>]+src="(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"[^>]+alt="([^"]*)"[^>]*>/g;
-  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
-  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+  const imageElements = document.querySelectorAll("img");
 
-  const imageMatches = [...html.matchAll(imageRegex)];
-  const altMatches = new Map([...html.matchAll(altRegex)].map(match => [match[1], match[2]]));
-  const titleMatches = [...html.matchAll(titleRegex)];
-  const siteNameMatches = [...html.matchAll(siteNameRegex)];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
-
-  return imageMatches.map((match, index) => {
-    const imageUrl = match[1];
-    return {
-      url: imageUrl,
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
-      imageTitle: altMatches.get(imageUrl) || "",
-    };
-  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+  return [...imageElements].map(img => ({
+    url: img.src,
+    title: img.closest(".toI8Rb.OSrXXb")?.textContent || "",
+    siteName: img.closest(".guK3rf.cHaqb")?.querySelector("span")?.textContent || "",
+    pageUrl: img.closest("a")?.href || "",
+    imageTitle: img.alt || "",
+  })).filter(image => image.url && !image.url.includes("ssl.gstatic.com/gb/images"));
 }
 
 // Fungsi untuk mengatur CORS
