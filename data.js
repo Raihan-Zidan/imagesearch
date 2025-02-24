@@ -83,28 +83,33 @@ async function fetchNews(query) {
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
+  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
+  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
 
-  const matches = [...html.matchAll(imageRegex)];
-  return matches.map(match => ({ image: ensureHttps(match[1]) }));
+  const imageMatches = [...html.matchAll(imageRegex)];
+  const titleMatches = [...html.matchAll(titleRegex)];
+  const siteNameMatches = [...html.matchAll(siteNameRegex)];
+  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+
+  return imageMatches.map((match, index) => {
+    return {
+      url: match[1],
+      title: titleMatches[index] ? titleMatches[index][1] : "",
+      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
+      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+    };
+  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
-function extractNewsData(html) {
-  const titleRegex = /<div class="n0jPhd ynAwRc MBeuO nDgy9d"[^>]*>(.*?)<\/div>/g;
-  const snippetRegex = /<div class="GI74Re nDgy9d"[^>]*>(.*?)<\/div>/g;
-  const timeRegex = /<div class="OSrXXb rbYSKb LfVVr"[^>]*><span>(.*?)<\/span><\/div>/g;
-  const imageRegex = /<img[^>]+src="(data:image\/jpeg;base64,[^"]+)"/g;
-
+function extractNewsTitles(html) {
+  // Regex untuk menangkap inner text dari div yang berisi judul berita
+  const titleRegex = /<div[^>]*class=["'][^"']*n0jPhd[^"']*["'][^>]*>(.*?)<\/div>/g;
+  
+  // Menggunakan matchAll untuk menangkap semua judul
   const titles = [...html.matchAll(titleRegex)].map(m => m[1]);
-  const snippets = [...html.matchAll(snippetRegex)].map(m => m[1]);
-  const times = [...html.matchAll(timeRegex)].map(m => m[1]);
-  const images = [...html.matchAll(imageRegex)].map(m => m[1]);
 
-  return titles.map((title, index) => ({
-    title,
-    snippet: snippets[index] || "",
-    time: times[index] || "",
-    image: images[index] || "",
-  }));
+  return titles;
 }
 
 function ensureHttps(url) {
