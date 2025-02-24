@@ -137,6 +137,9 @@ async function fetchNews(query) {
   }
 }
 
+function getCloudflareResizedUrl(imageUrl) {
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
+}
 function cleanHTML(html) {
   return html
     .replace(/<br\s*\/?>/gi, "\n") // Ubah <br> jadi newline
