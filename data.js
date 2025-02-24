@@ -2,6 +2,7 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
 
+    // Bypass request favicon.ico agar tidak error
     if (url.pathname === "/favicon.ico") {
       return new Response(null, { status: 204 });
     }
@@ -28,7 +29,7 @@ export default {
       });
 
       if (!response.ok) {
-        return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
+        return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
           status: response.status,
           headers: getCorsHeaders(),
         });
@@ -43,10 +44,10 @@ export default {
         imageResults.push({
           image: secureUrl,
           thumbnail: resizedUrl,
-          title: image.title,
+          title: image.title, // Title dari Google Image Search
+          imagetitle: image.imageTitle, // Judul yang lebih spesifik dari gambar
           siteName: image.siteName,
           pageUrl: image.pageUrl,
-          imageTitle: image.imageTitle,
         });
       }
 
@@ -79,26 +80,34 @@ function getCloudflareResizedUrl(imageUrl) {
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const altRegex = /<img[^>]+src="(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"[^>]+alt="([^"]*)"[^>]*>/g;
+  // Regex untuk menangkap URL gambar dari <img>
+  const imageRegex = /<img[^>]+src=["'](https?:\/\/[^" ]+\.(?:jpg|jpeg|png|gif|webp))["']/g;
+
+  // Regex untuk menangkap Image Title Block dari Google Image Search
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
+
+  // Regex untuk menangkap nama situs sumber gambar
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
+
+  // Regex untuk menangkap URL halaman sumber gambar
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
 
+  // Regex untuk menangkap "image title" dari atribut alt atau title dalam <img>
+  const imageTitleRegex = /<img[^>]+(?:alt|title)=["']([^"']+)["']/g;
+
   const imageMatches = [...html.matchAll(imageRegex)];
-  const altMatches = new Map([...html.matchAll(altRegex)].map(match => [match[1], match[2]]));
   const titleMatches = [...html.matchAll(titleRegex)];
   const siteNameMatches = [...html.matchAll(siteNameRegex)];
   const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+  const imageTitleMatches = [...html.matchAll(imageTitleRegex)];
 
   return imageMatches.map((match, index) => {
-    const imageUrl = match[1];
     return {
-      url: imageUrl,
-      title: titleMatches[index] ? titleMatches[index][1] : "",
+      url: match[1],  // URL gambar dari <img src="...">
+      title: titleMatches[index] ? titleMatches[index][1] : "", // Image Title Block dari Google
+      imageTitle: imageTitleMatches[index] ? imageTitleMatches[index][1] : "", // Judul dari alt/title atribut
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
-      imageTitle: altMatches.get(imageUrl) || "", // Ambil alt dari peta
     };
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
