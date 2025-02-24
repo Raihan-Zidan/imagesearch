@@ -92,7 +92,7 @@ async function fetchNews(query) {
     const html = await response.text();
     
     const news = extractNewsData(html);
-
+    const htmlContent = ({ html }) => `${html}`; 
     return new Response(htmlContent({ html }), {
       status: 200,
       headers: getCorsHeaders(),
