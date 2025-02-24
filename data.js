@@ -92,11 +92,10 @@ async function fetchNews(query) {
     const html = await response.text();
     
     const news = extractNewsData(html);
-    const htmlContent = ({ html }) => `${html}`; 
-    return new Response(htmlContent({ html }), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
+      return new Response(JSON.stringify({ query, items: news }), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
@@ -129,11 +128,14 @@ function extractImageData(html) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<div[^>]*class="[^"]*n0jPhd[^"]*"[^>]*>(.*?)<\/div>/gs; // Tambahkan 'g' untuk global match
-  const newsMatches = [...html.matchAll(newsRegex)];
+  const newsRegex = /<div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>/gs;
 
-  return newsMatches.map(match => ({
-    title: match[1]?.trim() || "wokwko" // Pastikan hasilnya bersih
+  const matches = [...html.matchAll(newsRegex)];
+
+  return matches.map(match => ({
+    title: match[1].trim(),
+    source: match[2].trim(),
+    summary: match[3].trim()
   }));
 }
 
