@@ -4,11 +4,13 @@ export default {
 
     // Bypass request favicon.ico agar tidak error
     if (url.pathname === "/favicon.ico") {
-      return new Response(null, { status: 204 });
+      return new Response(null, { status: 204 }); // No Content
     }
 
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
+
+    console.log("Query diterima:", query);
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -29,7 +31,7 @@ export default {
       });
 
       if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Terjadi kesalahan." }), {
+        return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
           status: response.status,
           headers: getCorsHeaders(),
         });
@@ -44,12 +46,13 @@ export default {
         imageResults.push({
           image: secureUrl,
           thumbnail: resizedUrl,
-          title: image.title, // Title dari Google Image Search
-          imagetitle: image.imageTitle, // Judul yang lebih spesifik dari gambar
+          title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
         });
       }
+
+      console.log("Response JSON:", { query, images: imageResults });
 
       return new Response(JSON.stringify({ query, images: imageResults }), {
         status: 200,
@@ -57,6 +60,7 @@ export default {
       });
 
     } catch (error) {
+      console.error("Error:", error);
       return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
         status: 500,
         headers: getCorsHeaders(),
@@ -80,32 +84,20 @@ function getCloudflareResizedUrl(imageUrl) {
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  // Regex untuk menangkap URL gambar dari <img>
-  const imageRegex = /<img[^>]+src=["'](https?:\/\/[^" ]+\.(?:jpg|jpeg|png|gif|webp))["']/g;
-
-  // Regex untuk menangkap Image Title Block dari Google Image Search
+  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
-
-  // Regex untuk menangkap nama situs sumber gambar
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-
-  // Regex untuk menangkap URL halaman sumber gambar
   const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
-
-  // Regex untuk menangkap "image title" dari atribut alt atau title dalam <img>
-  const imageTitleRegex = /<img[^>]+(?:alt|title)=["']([^"']+)["']/g;
 
   const imageMatches = [...html.matchAll(imageRegex)];
   const titleMatches = [...html.matchAll(titleRegex)];
   const siteNameMatches = [...html.matchAll(siteNameRegex)];
   const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
-  const imageTitleMatches = [...html.matchAll(imageTitleRegex)];
 
   return imageMatches.map((match, index) => {
     return {
-      url: match[1],  // URL gambar dari <img src="...">
-      title: titleMatches[index] ? titleMatches[index][1] : "", // Image Title Block dari Google
-      imageTitle: imageTitleMatches[index] ? imageTitleMatches[index][1] : "", // Judul dari alt/title atribut
+      url: match[1],
+      title: titleMatches[index] ? titleMatches[index][1] : "",
       siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
     };
