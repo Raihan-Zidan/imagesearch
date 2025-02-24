@@ -1,18 +1,13 @@
-import { JSDOM } from "jsdom";
-
 export default {
   async fetch(request) {
     const url = new URL(request.url);
 
-    // Bypass request favicon.ico agar tidak error
     if (url.pathname === "/favicon.ico") {
-      return new Response(null, { status: 204 }); // No Content
+      return new Response(null, { status: 204 });
     }
 
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
-
-    console.log("Query diterima:", query);
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -55,15 +50,12 @@ export default {
         });
       }
 
-      console.log("Response JSON:", { query, images: imageResults });
-
       return new Response(JSON.stringify({ query, images: imageResults }), {
         status: 200,
         headers: getCorsHeaders(),
       });
 
     } catch (error) {
-      console.error("Error:", error);
       return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
         status: 500,
         headers: getCorsHeaders(),
@@ -87,17 +79,28 @@ function getCloudflareResizedUrl(imageUrl) {
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const dom = new JSDOM(html);
-  const document = dom.window.document;
-  const imageElements = document.querySelectorAll("img");
+  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const altRegex = /<img[^>]+src="(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"[^>]+alt="([^"]*)"[^>]*>/g;
+  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
+  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
+  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
 
-  return [...imageElements].map(img => ({
-    url: img.src,
-    title: img.closest(".toI8Rb.OSrXXb")?.textContent || "",
-    siteName: img.closest(".guK3rf.cHaqb")?.querySelector("span")?.textContent || "",
-    pageUrl: img.closest("a")?.href || "",
-    imageTitle: img.alt || "",
-  })).filter(image => image.url && !image.url.includes("ssl.gstatic.com/gb/images"));
+  const imageMatches = [...html.matchAll(imageRegex)];
+  const altMatches = new Map([...html.matchAll(altRegex)].map(match => [match[1], match[2]]));
+  const titleMatches = [...html.matchAll(titleRegex)];
+  const siteNameMatches = [...html.matchAll(siteNameRegex)];
+  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+
+  return imageMatches.map((match, index) => {
+    const imageUrl = match[1];
+    return {
+      url: imageUrl,
+      title: titleMatches[index] ? titleMatches[index][1] : "",
+      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
+      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+      imageTitle: altMatches.get(imageUrl) || "", // Ambil alt dari peta
+    };
+  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
 // Fungsi untuk mengatur CORS
