@@ -41,9 +41,10 @@ export default {
       const images = extractImageData(html);
 
       for (const image of images) {
-        const resizedUrl = getCloudflareResizedUrl(image.url);
+        const secureUrl = ensureHttps(image.url);
+        const resizedUrl = getCloudflareResizedUrl(secureUrl);
         imageResults.push({
-          image: image.url,
+          image: secureUrl,
           thumbnail: resizedUrl,
           title: image.title,
           siteName: image.siteName,
@@ -68,17 +69,25 @@ export default {
   },
 };
 
-// Fungsi untuk mendapatkan URL gambar dari Cloudflare API
+// Fungsi untuk memastikan URL gambar selalu HTTPS
+function ensureHttps(url) {
+  if (url.startsWith("http://")) {
+    return url.replace("http://", "https://");
+  }
+  return url;
+}
+
+// Fungsi untuk mendapatkan URL gambar yang diproxy oleh Cloudflare API
 function getCloudflareResizedUrl(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
 }
 
 // Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const imageRegex = /"(https?:\\/\\/[^" ]+\\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
   const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
+  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\\/\\/[^" ]+)"/g;
 
   const imageMatches = [...html.matchAll(imageRegex)];
   const titleMatches = [...html.matchAll(titleRegex)];
