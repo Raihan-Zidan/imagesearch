@@ -90,6 +90,8 @@ async function fetchNews(query) {
 
     if (!response.ok) throw new Error("Failed to fetch news");
     const html = await response.text();
+    console.error(html);
+    alert(html);
     const news = extractNewsData(html);
 
     return new Response(JSON.stringify({ query, news }), {
