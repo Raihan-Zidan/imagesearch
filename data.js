@@ -48,7 +48,7 @@ async function fetchImages(query, start) {
       }
 
       const html = await response.text();
-      const images = extractImageData(html);
+      const images = await extractImageData(html);
 
       for (const image of images) {
         const secureUrl = ensureHttps(image.url);
@@ -59,7 +59,7 @@ async function fetchImages(query, start) {
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
-          imageHeight: image.height || null, // Menambahkan imageHeight
+          imageHeight: image.height,
         });
       }
 
@@ -75,6 +75,42 @@ async function fetchImages(query, start) {
         headers: getCorsHeaders(),
       });
     }
+}
+
+async function extractImageData(html) {
+  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
+  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
+  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
+
+  const imageMatches = [...html.matchAll(imageRegex)];
+  const titleMatches = [...html.matchAll(titleRegex)];
+  const siteNameMatches = [...html.matchAll(siteNameRegex)];
+  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+
+  const images = await Promise.all(imageMatches.map(async (match, index) => {
+    const height = await fetchImageHeight(match[1]);
+    return {
+      url: match[1],
+      title: titleMatches[index] ? titleMatches[index][1] : "",
+      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
+      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+      height: height,
+    };
+  }));
+
+  return images.filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+}
+
+async function fetchImageHeight(imageUrl) {
+  try {
+    const response = await fetch(imageUrl, { method: "HEAD" });
+    const contentLength = response.headers.get("Content-Length");
+    return contentLength ? parseInt(contentLength) : null;
+  } catch (error) {
+    console.error(`Failed to fetch image height: ${error.message}`);
+    return null;
+  }
 }
 
 async function fetchNews(query) {
@@ -101,20 +137,6 @@ async function fetchNews(query) {
   }
 }
 
-function extractNewsData(html) {
-  const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
-
-  const matches = [...html.matchAll(newsRegex)];
-
-  return matches.map(match => ({
-    url: decodeURIComponent(match[1]), // Ambil & decode URL berita
-    title: match[2].trim(),
-    source: match[3].trim(),
-    snippet: cleanHTML(match[4]), // Bersihkan HTML dalam ringkasan
-    thumbnail: match[5] || null // Ambil URL thumbnail
-  }));
-}
-
 function cleanHTML(html) {
   return html
     .replace(/<br\s*\/?>/gi, "\n") // Ubah <br> jadi newline
@@ -122,33 +144,6 @@ function cleanHTML(html) {
     .trim();
 }
 
-function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const heightRegex = /"ow":"(\d+)"/g; // Ambil tinggi gambar jika tersedia
-  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
-  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
-
-  const imageMatches = [...html.matchAll(imageRegex)];
-  const heightMatches = [...html.matchAll(heightRegex)];
-  const titleMatches = [...html.matchAll(titleRegex)];
-  const siteNameMatches = [...html.matchAll(siteNameRegex)];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
-
-  return imageMatches.map((match, index) => {
-    return {
-      url: match[1],
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
-      height: heightMatches[index] ? parseInt(heightMatches[index][1]) : null, // Ambil tinggi gambar
-    };
-  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
-}
-
-function getCloudflareResizedUrl(imageUrl) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
-}
 
 function ensureHttps(url) {
   if (url.startsWith("http://")) {
