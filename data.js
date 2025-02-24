@@ -127,16 +127,25 @@ function extractImageData(html) {
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
-function extractNewsData(html) {
-  const newsRegex = /<div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>/gs;
+function extractGoogleNews(html) {
+  const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
 
   const matches = [...html.matchAll(newsRegex)];
 
   return matches.map(match => ({
-    title: match[1].trim(),
-    source: match[2].trim(),
-    summary: match[3].trim()
+    url: decodeURIComponent(match[1]), // Ambil & decode URL berita
+    title: match[2].trim(),
+    source: match[3].trim(),
+    snippet: cleanHTML(match[4]), // Bersihkan HTML dalam ringkasan
+    thumbnail: match[5] || null // Ambil URL thumbnail
   }));
+}
+
+function cleanHTML(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n") // Ubah <br> jadi newline
+    .replace(/<[^>]+>/g, "") // Hapus semua tag HTML
+    .trim();
 }
 
 
