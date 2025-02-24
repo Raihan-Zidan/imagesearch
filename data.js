@@ -128,14 +128,14 @@ function extractImageData(html) {
 }
 
 function extractNewsData(html) {
-  // Regex untuk menangkap inner text dari div yang berisi judul berita
-  const titleRegex = /<div[^>]*class=["'][^"']*n0jPhd[^"']*["'][^>]*>(.*?)<\/div>/g;
-  
-  // Menggunakan matchAll untuk menangkap semua judul
-  const titles = [...html.matchAll(titleRegex)].map(m => m[1]);
+  const newsRegex = /<div[^>]+aria-level="3"[^>]+role="heading"[^>]*>(.*?)<\/div>/gs;
+  const newsMatches = [...html.matchAll(newsRegex)];
 
-  return titles;
+  return newsMatches.map(match => ({
+    title: match[1].replace(/<[^>]+>/g, '').trim() // Bersihkan tag HTML jika ada
+  }));
 }
+
 
 function getCloudflareResizedUrl(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
