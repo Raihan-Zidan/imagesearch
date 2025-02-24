@@ -80,7 +80,7 @@ async function fetchImages(query, start) {
 
 async function fetchNews(query) {
   try {
-    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=isch`;
+    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
@@ -94,7 +94,7 @@ async function fetchNews(query) {
       return t;
     };
     const htmlContent = ({ html }) => `${html}`;
-      return new Response(htmlContent({ html }), {
+      return new Response(JSON.stringify({ query: query, items: extractNewsData(html) }), {
         status: 200,
         headers: getCorsHeaders(),
       });
