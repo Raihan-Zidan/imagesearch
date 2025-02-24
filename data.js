@@ -82,7 +82,8 @@ async function fetchNews(query) {
 }
 
 function extractImageData(html) {
-  const imageRegex = /"(https?:\\/\\/[^" ]+\\.(jpg|jpeg|png|gif|webp))"/g;
+  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+
   const matches = [...html.matchAll(imageRegex)];
   return matches.map(match => ({ image: ensureHttps(match[1]) }));
 }
