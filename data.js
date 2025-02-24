@@ -150,6 +150,13 @@ function getCloudflareResizedUrl(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
 }
 
+function ensureHttps(url) {
+  if (url.startsWith("http://")) {
+    return url.replace("http://", "https://");
+  }
+  return url;
+}
+
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
