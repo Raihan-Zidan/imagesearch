@@ -10,8 +10,6 @@ export default {
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
 
-    console.log("Query diterima:", query);
-
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
         status: 400,
@@ -53,15 +51,12 @@ export default {
         });
       }
 
-      console.log("Response JSON:", { query, images: imageResults });
-
       return new Response(JSON.stringify({ query, images: imageResults }), {
         status: 200,
         headers: getCorsHeaders(),
       });
 
     } catch (error) {
-      console.error("Error:", error);
       return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
         status: 500,
         headers: getCorsHeaders(),
