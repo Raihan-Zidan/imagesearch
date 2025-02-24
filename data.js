@@ -59,10 +59,9 @@ async function fetchImages(query, start) {
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
+          imageHeight: image.height || null, // Menambahkan imageHeight
         });
       }
-
-      console.log("Response JSON:", { query, images: imageResults });
 
       return new Response(JSON.stringify({ query, images: imageResults }), {
         status: 200,
@@ -90,43 +89,16 @@ async function fetchNews(query) {
 
     if (!response.ok) throw new Error("Failed to fetch news");
     const html = await response.text();
-    const sethtml = function(t) {
-      return t;
-    };
-    const htmlContent = ({ html }) => `${html}`;
-      return new Response(JSON.stringify({ query: query, items: extractNewsData(html) }), {
-        status: 200,
-        headers: getCorsHeaders(),
-      });
+    return new Response(JSON.stringify({ query: query, items: extractNewsData(html) }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: getCorsHeaders(),
     });
   }
-}
-
-
-
-function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
-  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
-
-  const imageMatches = [...html.matchAll(imageRegex)];
-  const titleMatches = [...html.matchAll(titleRegex)];
-  const siteNameMatches = [...html.matchAll(siteNameRegex)];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
-
-  return imageMatches.map((match, index) => {
-    return {
-      url: match[1],
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
-    };
-  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
 function extractNewsData(html) {
@@ -150,17 +122,32 @@ function cleanHTML(html) {
     .trim();
 }
 
+function extractImageData(html) {
+  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
+  const heightRegex = /"ow":"(\d+)"/g; // Ambil tinggi gambar jika tersedia
+  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
+  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
+  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
+
+  const imageMatches = [...html.matchAll(imageRegex)];
+  const heightMatches = [...html.matchAll(heightRegex)];
+  const titleMatches = [...html.matchAll(titleRegex)];
+  const siteNameMatches = [...html.matchAll(siteNameRegex)];
+  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+
+  return imageMatches.map((match, index) => {
+    return {
+      url: match[1],
+      title: titleMatches[index] ? titleMatches[index][1] : "",
+      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
+      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
+      height: heightMatches[index] ? parseInt(heightMatches[index][1]) : null, // Ambil tinggi gambar
+    };
+  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+}
 
 function getCloudflareResizedUrl(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
-}
-
-
-function ensureHttps(url) {
-  if (url.startsWith("http://")) {
-    return url.replace("http://", "https://");
-  }
-  return url;
 }
 
 function getCorsHeaders() {
