@@ -2,15 +2,12 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
 
-    // Bypass request favicon.ico agar tidak error
     if (url.pathname === "/favicon.ico") {
-      return new Response(null, { status: 204 }); // No Content
+      return new Response(null, { status: 204 });
     }
 
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
-
-    console.log("Query diterima:", query);
 
     if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
@@ -19,92 +16,100 @@ export default {
       });
     }
 
-    let imageResults = [];
-
-    try {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
-      const response = await fetch(searchUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://www.google.com/",
-        },
-      });
-
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
-          status: response.status,
-          headers: getCorsHeaders(),
-        });
-      }
-
-      const html = await response.text();
-      const images = extractImageData(html);
-
-      for (const image of images) {
-        const secureUrl = ensureHttps(image.url);
-        const resizedUrl = getCloudflareResizedUrl(secureUrl);
-        imageResults.push({
-          image: secureUrl,
-          thumbnail: resizedUrl,
-          title: image.title,
-          siteName: image.siteName,
-          pageUrl: image.pageUrl,
-        });
-      }
-
-      console.log("Response JSON:", { query, images: imageResults });
-
-      return new Response(JSON.stringify({ query, images: imageResults }), {
-        status: 200,
-        headers: getCorsHeaders(),
-      });
-
-    } catch (error) {
-      console.error("Error:", error);
-      return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
-        status: 500,
-        headers: getCorsHeaders(),
-      });
+    if (url.pathname === "/images") {
+      return fetchImages(query, start);
+    } else if (url.pathname === "/news") {
+      return fetchNews(query);
     }
+
+    return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
+      status: 404,
+      headers: getCorsHeaders(),
+    });
   },
 };
 
-// Fungsi untuk memastikan URL gambar selalu HTTPS
-function ensureHttps(url) {
-  if (url.startsWith("http://")) {
-    return url.replace("http://", "https://");
+async function fetchImages(query, start) {
+  try {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://www.google.com/",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch images");
+    const html = await response.text();
+    const images = extractImageData(html);
+
+    return new Response(JSON.stringify({ query, images }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
   }
-  return url;
 }
 
-// Fungsi untuk mendapatkan URL gambar yang diproxy oleh Cloudflare API
-function getCloudflareResizedUrl(imageUrl) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
+async function fetchNews(query) {
+  try {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=nws`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://www.google.com/",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch news");
+    const html = await response.text();
+    const news = extractNewsData(html);
+
+    return new Response(JSON.stringify({ query, news }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
+  }
 }
 
-// Fungsi ekstraksi data gambar dari HTML hasil pencarian Google
 function extractImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
-  const siteNameRegex = /<div class="guK3rf cHaqb"[^>]*>.*?<span[^>]*>(.*?)<\/span>/g;
-  const pageUrlRegex = /<a class="EZAeBe"[^>]*href="(https?:\/\/[^" ]+)"/g;
-
-  const imageMatches = [...html.matchAll(imageRegex)];
-  const titleMatches = [...html.matchAll(titleRegex)];
-  const siteNameMatches = [...html.matchAll(siteNameRegex)];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
-
-  return imageMatches.map((match, index) => {
-    return {
-      url: match[1],
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      siteName: siteNameMatches[index] ? siteNameMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
-    };
-  }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
+  const imageRegex = /"(https?:\\/\\/[^" ]+\\.(jpg|jpeg|png|gif|webp))"/g;
+  const matches = [...html.matchAll(imageRegex)];
+  return matches.map(match => ({ image: ensureHttps(match[1]) }));
 }
 
-// Fungsi untuk mengatur CORS
+function extractNewsData(html) {
+  const titleRegex = /<div class="n0jPhd ynAwRc MBeuO nDgy9d"[^>]*>(.*?)<\/div>/g;
+  const snippetRegex = /<div class="GI74Re nDgy9d"[^>]*>(.*?)<\/div>/g;
+  const timeRegex = /<div class="OSrXXb rbYSKb LfVVr"[^>]*><span>(.*?)<\/span><\/div>/g;
+  const imageRegex = /<img[^>]+src="(data:image\/jpeg;base64,[^"]+)"/g;
+
+  const titles = [...html.matchAll(titleRegex)].map(m => m[1]);
+  const snippets = [...html.matchAll(snippetRegex)].map(m => m[1]);
+  const times = [...html.matchAll(timeRegex)].map(m => m[1]);
+  const images = [...html.matchAll(imageRegex)].map(m => m[1]);
+
+  return titles.map((title, index) => ({
+    title,
+    snippet: snippets[index] || "",
+    time: times[index] || "",
+    image: images[index] || "",
+  }));
+}
+
+function ensureHttps(url) {
+  return url.startsWith("http://") ? url.replace("http://", "https://") : url;
+}
+
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
