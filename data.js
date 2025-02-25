@@ -88,15 +88,17 @@ async function getImageHeight(imageUrl) {
     const response = await fetch(imageUrl);
     if (!response.ok) throw new Error("Gagal mengunduh gambar");
 
-    const buffer = await response.buffer();
-    const metadata = await sharp(buffer).metadata();
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
+    const metadata = await sharp(buffer).metadata();
     return metadata.height || null;
   } catch (error) {
     console.error(`Gagal mendapatkan tinggi gambar: ${imageUrl}`, error);
     return null;
   }
 }
+
 
 function getCorsHeaders() {
   return {
