@@ -82,17 +82,16 @@ async function fetchImages(query, start) {
   }
 }
 
-// Fungsi untuk mengambil tinggi gambar menggunakan Sharp
 async function getImageHeight(imageUrl) {
   try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error("Gagal mengunduh gambar");
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const metadata = await sharp(buffer).metadata();
-    return metadata.height || null;
+    const response = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=json`);
+    const data = await response.json();
+    
+    if (data.height) {
+      return data.height;
+    } else {
+      throw new Error("Tidak bisa mendapatkan tinggi gambar.");
+    }
   } catch (error) {
     console.error(`Gagal mendapatkan tinggi gambar: ${imageUrl}`, error);
     return null;
