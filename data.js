@@ -1,3 +1,4 @@
+import sharp from "sharp";
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -53,14 +54,15 @@ async function fetchImages(query, start) {
         const imagePromises = images.map(async (image) => {
             const secureUrl = ensureHttps(image.url);
             const resizedUrl = getCloudflareResizedUrl(secureUrl);
-            const width = await getImageHeight(secureUrl);
+            const { width, height } = await getImageSize(secureUrl);
             return {
                 image: secureUrl,
                 thumbnail: resizedUrl,
                 title: image.title,
                 siteName: image.siteName,
                 pageUrl: image.pageUrl,
-                width,
+                width, // Tambahkan ukuran gambar
+                height, // Tambahkan ukuran gambar
             };
         });
 
@@ -145,6 +147,20 @@ function extractNewsData(html) {
     snippet: cleanHTML(match[4]), // Bersihkan HTML dalam ringkasan
     thumbnail: match[5] || null // Ambil URL thumbnail
   }));
+}
+
+async function getImageSize(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Gagal mengambil gambar");
+
+        const buffer = await response.arrayBuffer();
+        const metadata = await sharp(Buffer.from(buffer)).metadata();
+        return { width: metadata.width, height: metadata.height };
+    } catch (error) {
+        console.error(`Error fetching image size: ${url}`, error);
+        return { width: null, height: null }; // Handle jika gagal
+    }
 }
 
 function cleanHTML(html) {
