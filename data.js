@@ -50,19 +50,22 @@ async function fetchImages(query, start) {
       const html = await response.text();
       const images = extractImageData(html);
 
-      for (const image of images) {
-        const secureUrl = ensureHttps(image.url);
-        const resizedUrl = getCloudflareResizedUrl(secureUrl);
-        const height = await getImageHeight(secureUrl);
-        imageResults.push({
-          image: secureUrl,
-          thumbnail: resizedUrl,
-          title: image.title,
-          siteName: image.siteName,
-          pageUrl: image.pageUrl,
-          tinggi: height,
+        const imagePromises = images.map(async (image) => {
+            const secureUrl = ensureHttps(image.url);
+            const resizedUrl = getCloudflareResizedUrl(secureUrl);
+            const { width, height } = await getImageSize(secureUrl);
+            return {
+                image: secureUrl,
+                thumbnail: resizedUrl,
+                title: image.title,
+                siteName: image.siteName,
+                pageUrl: image.pageUrl,
+                width, // Tambahkan ukuran gambar
+                height, // Tambahkan ukuran gambar
+            };
         });
-      }
+
+      imageResults = await Promise.all(imagePromises);
 
       console.log("Response JSON:", { query, images: imageResults });
 
