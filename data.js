@@ -53,15 +53,14 @@ async function fetchImages(query, start) {
         const imagePromises = images.map(async (image) => {
             const secureUrl = ensureHttps(image.url);
             const resizedUrl = getCloudflareResizedUrl(secureUrl);
-            const { width, height } = await getImageSize(secureUrl);
+            const { width, height } = await getImageHeight(secureUrl);
             return {
                 image: secureUrl,
                 thumbnail: resizedUrl,
                 title: image.title,
                 siteName: image.siteName,
                 pageUrl: image.pageUrl,
-                width, // Tambahkan ukuran gambar
-                height, // Tambahkan ukuran gambar
+                width,
             };
         });
 
