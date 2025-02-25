@@ -1,4 +1,3 @@
-
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -51,22 +50,17 @@ async function fetchImages(query, start) {
       const html = await response.text();
       const images = extractImageData(html);
 
-        const imagePromises = images.map(async (image) => {
-            const secureUrl = ensureHttps(image.url);
-            const resizedUrl = getCloudflareResizedUrl(secureUrl);
-            const height = await getImageHeight(secureUrl);
-
-            return {
-                image: secureUrl,
-                thumbnail: resizedUrl,
-                title: image.title,
-                siteName: image.siteName,
-                pageUrl: image.pageUrl,
-                height, // Tambahkan tinggi gambar
-            };
+      for (const image of images) {
+        const secureUrl = ensureHttps(image.url);
+        const resizedUrl = getCloudflareResizedUrl(secureUrl);
+        imageResults.push({
+          image: secureUrl,
+          thumbnail: resizedUrl,
+          title: image.title,
+          siteName: image.siteName,
+          pageUrl: image.pageUrl,
         });
-
-      imageResults = await Promise.all(imagePromises);
+      }
 
       console.log("Response JSON:", { query, images: imageResults });
 
@@ -154,22 +148,6 @@ function cleanHTML(html) {
     .replace(/<br\s*\/?>/gi, "\n") // Ubah <br> jadi newline
     .replace(/<[^>]+>/g, "") // Hapus semua tag HTML
     .trim();
-}
-
-async function getImageHeight(imageUrl) {
-  try {
-    const response = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=json`);
-    const data = await response.json();
-    
-    if (data.height) {
-      return data.height;
-    } else {
-      throw new Error("Tidak bisa mendapatkan tinggi gambar.");
-    }
-  } catch (error) {
-    console.error(`Gagal mendapatkan tinggi gambar: ${imageUrl}`, error);
-    return null;
-  }
 }
 
 
