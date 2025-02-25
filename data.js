@@ -1,7 +1,3 @@
-import sharp from "sharp";
-import fetch from "node-fetch";
-import { Readable } from "stream";
-
 export default {
   async fetch(request) {
     const url = new URL(request.url);
