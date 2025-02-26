@@ -178,29 +178,40 @@ function extractImageData(html) {
 async function extractNewsData(html) {
   const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
 
-  const matches = [...html.matchAll(newsRegex)];
+  if (typeof html !== "string") {
+    console.error("Invalid HTML input: Expected a string but got", typeof html);
+    return [];
+  }
 
-  const newsItems = await Promise.all(matches.map(async (match) => {
-    const url = decodeURIComponent(match[1]);
-    if (shouldExcludeUrl(url)) return null;
+  const matches = Array.from(html.matchAll(newsRegex)); // Ensure it's an array
 
-    const snippet = cleanHTML(match[4]);
-    const posttime = extractPosttime(snippet);
+  if (matches.length === 0) {
+    console.warn("No matches found for news regex");
+  }
 
-    const thumbnail = await fetchThumbnailFromAPI(url);
+  const newsItems = await Promise.all(
+    matches.map(async (match) => {
+      const url = decodeURIComponent(match[1]);
+      if (shouldExcludeUrl(url)) return null;
 
-    return {
-      url,
-      title: match[2].trim(),
-      source: match[3].trim(),
-      snippet,
-      thumbnail,
-      posttime,
-    };
-  }));
+      const snippet = cleanHTML(match[4]);
+      const posttime = extractPosttime(snippet);
+      const thumbnail = await fetchThumbnailFromAPI(url);
 
-  return newsItems.filter(item => item !== null);
+      return {
+        url,
+        title: match[2].trim(),
+        source: match[3].trim(),
+        snippet,
+        thumbnail,
+        posttime,
+      };
+    })
+  );
+
+  return newsItems.filter((item) => item !== null);
 }
+
 
 
 async function fetchThumbnailFromAPI(articleUrl) {
