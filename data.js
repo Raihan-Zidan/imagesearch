@@ -89,7 +89,9 @@ async function fetchImages(query, start) {
 
 async function proxyImage(imageUrl) {
   try {
-    const response = await fetch(imageUrl, {
+    const compressedUrl = `https://api.resmush.it/ws.php?img=${encodeURIComponent(imageUrl)}&quality=70`;
+
+    const response = await fetch(compressedUrl, {
       headers: { "User-Agent": "Mozilla/5.0" },
     });
 
@@ -100,10 +102,20 @@ async function proxyImage(imageUrl) {
       });
     }
 
-    return new Response(response.body, {
+    const data = await response.json();
+    if (!data.dest) {
+      return new Response(JSON.stringify({ error: "Gagal mengompresi gambar" }), {
+        status: 500,
+        headers: getCorsHeaders(),
+      });
+    }
+
+    // Fetch gambar yang sudah dikompresi
+    const compressedResponse = await fetch(data.dest);
+    return new Response(compressedResponse.body, {
       status: 200,
       headers: {
-        "Content-Type": response.headers.get("Content-Type") || "image/jpeg",
+        "Content-Type": "image/jpeg",
         "Cache-Control": "public, max-age=86400",
       },
     });
@@ -114,6 +126,7 @@ async function proxyImage(imageUrl) {
     });
   }
 }
+
 
 
 async function fetchNews(query) {
