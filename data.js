@@ -175,30 +175,33 @@ function extractImageData(html) {
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
-function extractNewsData(html) {
+async function extractNewsData(html) {
   const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
 
   const matches = [...html.matchAll(newsRegex)];
 
-  return matches
-    .map(match => {
-      const url = decodeURIComponent(match[1]); // Ambil & decode URL berita
-      if (shouldExcludeUrl(url)) return null; // Hapus berita dari URL yang tidak diinginkan
+  const newsItems = await Promise.all(matches.map(async (match) => {
+    const url = decodeURIComponent(match[1]);
+    if (shouldExcludeUrl(url)) return null;
 
-      const snippet = cleanHTML(match[4]); // Bersihkan snippet dari tag HTML
-      const posttime = extractPosttime(snippet); // Ambil bagian terakhir dari snippet
+    const snippet = cleanHTML(match[4]);
+    const posttime = extractPosttime(snippet);
 
-      return {
-        url,
-        title: match[2].trim(),
-        source: match[3].trim(),
-        snippet, // Simpan snippet yang sudah dibersihkan
-        thumbnail: await fetchThumbnailFromAPI(url),
-        posttime, // Ambil waktu publikasi dari bagian akhir snippet
-      };
-    })
-    .filter(item => item !== null); // Hapus hasil yang di-filter
+    const thumbnail = await fetchThumbnailFromAPI(url);
+
+    return {
+      url,
+      title: match[2].trim(),
+      source: match[3].trim(),
+      snippet,
+      thumbnail,
+      posttime,
+    };
+  }));
+
+  return newsItems.filter(item => item !== null);
 }
+
 
 async function fetchThumbnailFromAPI(articleUrl) {
   try {
