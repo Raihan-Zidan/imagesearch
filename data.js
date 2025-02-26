@@ -20,7 +20,7 @@ export default {
     if (url.pathname === "/images") {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
-      return fetchNews(query);
+      return fetchNews(query, start);
     } else if (url.pathname === "/thumbnail" && articleUrl) {
       return fetchThumbnail(articleUrl);
     }
@@ -81,9 +81,9 @@ async function fetchImages(query, start) {
     }
 }
 
-async function fetchNews(query) {
+async function fetchNews(query, start) {
   try {
-    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws`;
+    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws&start=${start}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
