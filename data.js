@@ -107,22 +107,48 @@ async function fetchNews(query) {
   }
 }
 
-function extractNewsData(html) {
-  // Regex untuk mendapatkan URL dan Title
+async function extractNewsData(html) {
   const newsRegex = /<a[^>]+href="([^"]*\/read\/[^"]+)"[^>]*>(.*?)<\/a>/g;
   const matches = [...html.matchAll(newsRegex)];
 
-  // Regex untuk mendapatkan Publish Time
   const timeRegex = /<time[^>]+datetime="([^"]+)"[^>]*>/g;
-  const timeMatches = [...html.matchAll(timeRegex)].map(match => match[1]); // Ambil semua publish time
+  const timeMatches = [...html.matchAll(timeRegex)].map(match => match[1]);
 
-  // Buat array hasil
-  return matches.map((match, index) => ({
-    url: `https://news.google.com${match[1].replace(/&amp;/g, "&")}`, // Perbaiki "&amp;" menjadi "&"
-    title: match[2].trim(),
-    publishTime: timeMatches[index] || null, // Jika tidak ada, default ke null
-  }));
+  const results = await Promise.all(
+    matches.map(async (match, index) => {
+      const googleNewsUrl = `https://news.google.com${match[1].replace(/&amp;/g, "&")}`;
+      const realUrl = await getRealNewsUrl(googleNewsUrl); // Ambil URL asli
+
+      return {
+        title: match[2].trim(),
+        url: realUrl,
+        publishTime: timeMatches[index] || null,
+      };
+    })
+  );
+
+  return results;
 }
+
+async function getRealNewsUrl(googleNewsUrl) {
+  try {
+    const response = await fetch(googleNewsUrl, {
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    return response.url; // Ambil URL asli setelah redirect
+  } catch (error) {
+    return googleNewsUrl; // Jika gagal, pakai URL Google News
+  }
+}
+
+// Contoh penggunaan
+(async () => {
+  const html = `...`; // Masukkan HTML hasil scraping di sini
+  const news = await extractNewsData(html);
+  console.log(news);
+})();
+
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
