@@ -137,26 +137,41 @@ function extractNewsData(html) {
 
   const matches = [...html.matchAll(newsRegex)];
 
-  return matches.map(match => {
-    const snippet = cleanHTML(match[4]); // Bersihkan snippet dari tag HTML
-    const posttime = extractPosttime(snippet); // Ambil bagian terakhir dari snippet
+  return matches
+    .map(match => {
+      const url = decodeURIComponent(match[1]); // Ambil & decode URL berita
+      if (shouldExcludeUrl(url)) return null; // Hapus berita dari URL yang tidak diinginkan
 
-    return {
-      url: decodeURIComponent(match[1]), // Ambil & decode URL berita
-      title: match[2].trim(),
-      source: match[3].trim(),
-      snippet, // Simpan snippet yang sudah dibersihkan
-      thumbnail: match[5] || null, // Ambil URL thumbnail
-      publish: posttime, // Ambil waktu publikasi dari bagian akhir snippet
-    };
-  });
+      const snippet = cleanHTML(match[4]); // Bersihkan snippet dari tag HTML
+      const posttime = extractPosttime(snippet); // Ambil bagian terakhir dari snippet
+
+      return {
+        url,
+        title: match[2].trim(),
+        source: match[3].trim(),
+        snippet, // Simpan snippet yang sudah dibersihkan
+        thumbnail: match[5] || null, // Ambil URL thumbnail
+        posttime, // Ambil waktu publikasi dari bagian akhir snippet
+      };
+    })
+    .filter(item => item !== null); // Hapus hasil yang di-filter
 }
 
+// Fungsi untuk menyaring URL yang tidak diinginkan
+function shouldExcludeUrl(url) {
+  const blockedDomains = [
+    "https://maps.google.com" // Tambahkan URL yang ingin diblokir di sini
+  ];
+  return blockedDomains.some(blocked => url.startsWith(blocked));
+}
+
+// Fungsi untuk mengambil bagian terakhir dari snippet sebagai publish time
 function extractPosttime(snippet) {
   const parts = snippet.split("\n"); // Pisahkan berdasarkan baris baru
   const lastPart = parts[parts.length - 1].trim(); // Ambil bagian terakhir dan hapus spasi
   return lastPart || null; // Kembalikan nilai atau null jika kosong
 }
+
 
 
 
