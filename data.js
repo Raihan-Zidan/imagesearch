@@ -108,7 +108,7 @@ async function proxyImage(imageUrl) {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: Gagal memproksi gambar: ${error.message} }), {
+    return new Response(JSON.stringify({ error: `Gagal memproksi gambar: ${error.message}` }), {
       status: 500,
       headers: getCorsHeaders(),
     });
