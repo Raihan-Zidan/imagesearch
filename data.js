@@ -48,14 +48,15 @@ async function fetchImages(query, start) {
       }
 
       const html = await response.text();
-      const images = extractImageData(html);
+      const imagaes = extractImageData(html);
+      const images = await processImages(html);
 
       for (const image of images) {
         const secureUrl = ensureHttps(image.url);
         const resizedUrl = getCloudflareResizedUrl(secureUrl);
         imageResults.push({
           image: secureUrl,
-          thumbnail: resizedUrl,
+          await getCloudflareResizedBase64(img.image),
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
@@ -155,7 +156,7 @@ function getCloudflareResizedUrlh(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
 }
 
-async function getCloudflareResizedUrl(imageUrl) {
+async function getCloudflareResizedBase64(imageUrl) {
   const url = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
   
   try {
@@ -173,6 +174,7 @@ async function getCloudflareResizedUrl(imageUrl) {
     return null;
   }
 }
+
 
 
 
