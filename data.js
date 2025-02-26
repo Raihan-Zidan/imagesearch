@@ -81,7 +81,54 @@ async function fetchImages(query, start) {
     }
 }
 
-async function fetchNews(query, start) {
+async function fetchNews(query, start = 0) {
+  let allNews = [];
+  const maxStart = 60; // Maksimum start value
+  const step = 10; // Setiap permintaan mengambil 10 berita
+
+  try {
+    while (start < maxStart) {
+      const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws&start=${start}`;
+      const response = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          "Referer": "https://www.google.com/",
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch news");
+      const html = await response.text();
+      let newsData = extractNewsData(html);
+
+      if (newsData.length === 0) break; // Stop jika tidak ada data lagi
+
+      // 🔥 **Ambil thumbnail jika tidak ada di data awal**
+      newsData = await Promise.all(newsData.map(async (news) => {
+        if (!news.thumbnail) {
+          news.thumbnail = await fetchThumbnailFromAPI(news.url);
+        }
+        return news;
+      }));
+
+      allNews.push(...newsData);
+      start += step; // Tambah nilai start untuk mengambil batch berikutnya
+    }
+
+    return new Response(JSON.stringify({ query, items: allNews }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
+  }
+}
+
+
+async function fetcshNews(query, start) {
   let allNews = [];
   const maxStart = 60; // Maksimum start value
   const step = 10; // Setiap permintaan mengambil 10 berita
@@ -116,6 +163,24 @@ async function fetchNews(query, start) {
       status: 500,
       headers: getCorsHeaders(),
     });
+  }
+}
+
+
+async function fetchThumbnailFromAPI(articleUrl) {
+  try {
+    const apiUrl = `http://imagesearch.raihan-zidan2709.workers.dev/thumbnail?url=${encodeURIComponent(articleUrl)}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (data.thumbnail) {
+      return data.thumbnail;
+    } else {
+      return null; // Jika tidak ada, tetap null
+    }
+  } catch (error) {
+    console.error("Error fetching thumbnail:", error);
+    return null;
   }
 }
 
