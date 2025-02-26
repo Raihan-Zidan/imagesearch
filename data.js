@@ -133,19 +133,23 @@ function extractImageData(html) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)".*?<div[^>]*class="OSrXXb rbYSKb LfVVr"[^>]*><span>(.*?)<\/span>/gs;
+  const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
+
+  const posttimeRegex = /<div[^>]*class=["']OSrXXb rbYSKb LfVVr["'][^>]*>\s*<span>(.*?)<\/span>/g;
 
   const matches = [...html.matchAll(newsRegex)];
+  const posttimeMatches = [...html.matchAll(posttimeRegex)].map(match => match[1]);
 
-  return matches.map(match => ({
+  return matches.map((match, index) => ({
     url: decodeURIComponent(match[1]), // Ambil & decode URL berita
     title: match[2].trim(),
     source: match[3].trim(),
     snippet: cleanHTML(match[4]), // Bersihkan HTML dalam ringkasan
     thumbnail: match[5] || null, // Ambil URL thumbnail
-    posttime: match[6] ? match[6].trim() : null, // Ambil waktu publikasi
+    posttime: posttimeMatches[index] ? posttimeMatches[index].trim() : null, // Ambil waktu publikasi
   }));
 }
+
 
 
 async function fetchThumbnail(articleUrl) {
