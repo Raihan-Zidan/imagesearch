@@ -92,8 +92,12 @@ async function proxyImage(imageUrl) {
     const compressedUrl = `https://api.resmush.it/ws.php?img=${encodeURIComponent(imageUrl)}&quality=70`;
 
     const response = await fetch(compressedUrl, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
+  headers: {
+    "User-Agent": "Mozilla/5.0",
+    "Referer": "https://imagesearch.raihan-zidan2709.workers.dev/", // Gantilah dengan domain yang valid
+  },
+});
+
 
     if (!response.ok) {
       return new Response(JSON.stringify({ error: "Gagal memuat gambar" }), {
