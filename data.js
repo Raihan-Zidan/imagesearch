@@ -83,7 +83,7 @@ async function fetchNews(query) {
     const searchUrl = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-ID&gl=ID`;
     const response = await fetch(searchUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Referer": "https://news.google.com/",
       },
     });
@@ -108,7 +108,7 @@ async function fetchNews(query) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<a[^>]+href="([^"]+)"[^>]*class="DY5T1d RZIKme"[^>]*>(.+?)<\/a>/g;
+  const newsRegex = /<a[^>]+href="([^"]*\/read\/[^"]+)"[^>]*>(.*?)<\/a>/g;
   const matches = [...html.matchAll(newsRegex)];
 
   return matches.map(match => ({
