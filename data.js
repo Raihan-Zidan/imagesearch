@@ -83,7 +83,7 @@ async function fetchImages(query, start) {
 
 async function fetchNews(query, start) {
   let allNews = [];
-  const maxStart = 30; // Maksimum start value
+  const maxStart = 60; // Maksimum start value
   const step = 10; // Setiap permintaan mengambil 10 berita
 
   try {
