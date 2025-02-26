@@ -9,7 +9,7 @@ export default {
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
 
-    if (!query) {
+    if (!query && !articleUrl) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
         status: 400,
         headers: getCorsHeaders(),
@@ -20,6 +20,8 @@ export default {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
       return fetchNews(query);
+    } else if (url.pathname === "/thumbnail" && articleUrl) {
+      return fetchThumbnail(articleUrl);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -142,6 +144,45 @@ function extractNewsData(html) {
     thumbnail: match[5] || null // Ambil URL thumbnail
   }));
 }
+
+async function fetchThumbnail(articleUrl) {
+  try {
+    const response = await fetch(articleUrl);
+    const html = await response.text();
+    const metaTags = html.match(/<meta[^>]+>/g) || [];
+    let thumbnail = null;
+
+    for (const tag of metaTags) {
+      if (/property=["']og:image["']/.test(tag) || /name=["']twitter:image["']/.test(tag)) {
+        const match = tag.match(/content=["'](https?:\/\/[^"']+)["']/);
+        if (match) {
+          thumbnail = match[1];
+          break;
+        }
+      }
+    }
+
+    if (!thumbnail) {
+      return new Response(JSON.stringify({ error: "No thumbnail found" }), { status: 404 });
+    }
+
+    return new Response(JSON.stringify({ thumbnail }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Failed to fetch the article" }), { status: 500 });
+  }
+}
+
+function getCorsHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
 
 function cleanHTML(html) {
   return html
