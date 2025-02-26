@@ -8,6 +8,7 @@ export default {
 
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
+    const articleUrl = url.searchParams.get("url");
 
     if (!query && !articleUrl) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
