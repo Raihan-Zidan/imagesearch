@@ -151,9 +151,29 @@ function cleanHTML(html) {
 }
 
 
-function getCloudflareResizedUrl(imageUrl) {
+function getCloudflareResizedUrlh(imageUrl) {
   return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
 }
+
+async function getCloudflareResizedUrl(imageUrl) {
+  const url = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
+  
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(",")[1]); // Mengambil bagian base64 saja
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Error fetching image:", error);
+    return null;
+  }
+}
+
 
 
 function ensureHttps(url) {
