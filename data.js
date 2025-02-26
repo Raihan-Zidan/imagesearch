@@ -174,14 +174,6 @@ async function fetchThumbnail(articleUrl) {
   }
 }
 
-function getCorsHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-}
 
 
 function cleanHTML(html) {
