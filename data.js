@@ -91,7 +91,25 @@ async function fetchNews(query) {
     if (!response.ok) throw new Error("Failed to fetch news");
     const html = await response.text();
 
-    return new Response(JSON.stringify({ query: query, items: extractNewsData(html) }), {
+    function htmlContent({ html }) {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Response Page</title>
+    </head>
+    <body>
+      <div id="content">
+        ${html}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+    return new Response(htmlContent({ html }), {
       status: 200,
       headers: getCorsHeaders(),
     });
