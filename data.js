@@ -104,15 +104,13 @@ async function fetchNews(query) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<a class="VDXfz"[^>]*href="\.\/read\/(.*?)"[^>]*>.*?<h3[^>]*>(.*?)<\/h3>/gs;
+  const newsRegex = /<a[^>]*class="DY5T1d RZIKme"[^>]*>(.*?)<\/a>/gs;;
   const matches = [...html.matchAll(newsRegex)];
 
   return matches.map(match => ({
-    url: `https://news.google.com/read/${match[1]}`,
-    title: match[2].trim(),
+    title: match[1].trim(),
   }));
 }
-
 
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
