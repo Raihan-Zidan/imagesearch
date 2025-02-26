@@ -9,7 +9,7 @@ export default {
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
 
-    if (!query && url.pathname !== "/imgproxy") {
+    if (!query && url.pathname !== "/img") {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
         status: 400,
         headers: getCorsHeaders(),
