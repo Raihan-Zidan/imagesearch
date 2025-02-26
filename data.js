@@ -80,24 +80,21 @@ async function fetchImages(query, start) {
 
 async function fetchNews(query) {
   try {
-    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws`;
+    const searchUrl = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-ID&gl=ID`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://www.google.com/",
+        "Referer": "https://news.google.com/",
       },
     });
 
     if (!response.ok) throw new Error("Failed to fetch news");
     const html = await response.text();
-    const sethtml = function(t) {
-      return t;
-    };
-    const htmlContent = ({ html }) => `${html}`;
-      return new Response(JSON.stringify({ query: query, items: extractNewsData(html) }), {
-        status: 200,
-        headers: getCorsHeaders(),
-      });
+
+    return new Response(JSON.stringify({ query: query, items: extractNewsData(html) }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
@@ -106,6 +103,15 @@ async function fetchNews(query) {
   }
 }
 
+function extractNewsData(html) {
+  const newsRegex = /<a class="VDXfz"[^>]*href="\.\/read\/(.*?)"[^>]*>.*?<h3[^>]*>(.*?)<\/h3>/gs;
+  const matches = [...html.matchAll(newsRegex)];
+
+  return matches.map(match => ({
+    url: `https://news.google.com/read/${match[1]}`,
+    title: match[2].trim(),
+  }));
+}
 
 
 function extractImageData(html) {
@@ -127,20 +133,6 @@ function extractImageData(html) {
       pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1] : "",
     };
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
-}
-
-function extractNewsData(html) {
-  const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
-
-  const matches = [...html.matchAll(newsRegex)];
-
-  return matches.map(match => ({
-    url: decodeURIComponent(match[1]), // Ambil & decode URL berita
-    title: match[2].trim(),
-    source: match[3].trim(),
-    snippet: cleanHTML(match[4]), // Bersihkan HTML dalam ringkasan
-    thumbnail: match[5] || null // Ambil URL thumbnail
-  }));
 }
 
 function cleanHTML(html) {
