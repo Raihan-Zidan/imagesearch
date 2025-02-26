@@ -264,14 +264,10 @@ async function fetchThumbnail(articleUrl) {
       return new Response(JSON.stringify({ error: "No thumbnail found" }), { status: 404 });
     }
 
-return new Response(JSON.stringify({ thumbnail }), {
-  headers: {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  },
-});
+    return new Response(JSON.stringify({ thumbnail }), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
 
   } catch (error) {
     console.error("Fetch Error:", error);
