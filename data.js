@@ -91,28 +91,14 @@ async function fetchNews(query) {
     if (!response.ok) throw new Error("Failed to fetch news");
     const html = await response.text();
 
-    function htmlContent({ html }) {
-  return `
-    <!DOCTYPE html>
-    <html lang="id">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Response Page</title>
-    </head>
-    <body>
-      <div id="content">
-        ${html}
-      </div>
-    </body>
-    </html>
-  `;
-}
+    // Panggil fungsi ekstraksi data berita
+    const newsData = extractNewsData(html);
 
-    return new Response(htmlContent({ html }), {
+    return new Response(JSON.stringify(newsData, null, 2), {
       status: 200,
       headers: getCorsHeaders(),
     });
+
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
@@ -122,11 +108,12 @@ async function fetchNews(query) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<a[^>]*class="DY5T1d RZIKme"[^>]*>(.*?)<\/a>/gs;;
+  const newsRegex = /<a[^>]*href="\/articles\/([^"]+)"[^>]*>(.*?)<\/a>/gs;
   const matches = [...html.matchAll(newsRegex)];
 
   return matches.map(match => ({
-    title: match[1].trim(),
+    title: match[2].replace(/<.*?>/g, "").trim(), // Hapus tag HTML dalam title
+    url: `https://news.google.com/articles/${match[1]}`,
   }));
 }
 
