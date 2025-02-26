@@ -84,7 +84,7 @@ async function fetchImages(query, start) {
 
 async function fetchNews(query, start) {
   let allNews = [];
-  const maxStart = 60; // Maksimum start value
+  const maxStart = 20; // Maksimum start value
   const step = 10; // Setiap permintaan mengambil 10 berita
 
   try {
@@ -193,11 +193,24 @@ function extractNewsData(html) {
         title: match[2].trim(),
         source: match[3].trim(),
         snippet, // Simpan snippet yang sudah dibersihkan
-        thumbnail: match[5] || null, // Ambil URL thumbnail
+        thumbnail: await fetchThumbnailFromAPI(url),
         posttime, // Ambil waktu publikasi dari bagian akhir snippet
       };
     })
     .filter(item => item !== null); // Hapus hasil yang di-filter
+}
+
+async function fetchThumbnailFromAPI(articleUrl) {
+  try {
+    let response = await fetch(`https://imagesearch.raihan-zidan2709.workers.dev/thumbnail?url=${encodeURIComponent(articleUrl)}`);
+    if (!response.ok) throw new Error("Failed to fetch thumbnail");
+
+    let data = await response.json();
+    return data.thumbnail || null;
+  } catch (error) {
+    console.error("Error fetching thumbnail:", error);
+    return null;
+  }
 }
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
