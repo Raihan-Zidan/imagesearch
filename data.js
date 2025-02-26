@@ -108,12 +108,12 @@ async function fetchNews(query) {
 }
 
 function extractNewsData(html) {
-  const newsRegex = /<a[^>]*href="\/articles\/([^"]+)"[^>]*>(.*?)<\/a>/gs;
+  const newsRegex = /<a[^>]+href="([^"]+)"[^>]*class="DY5T1d RZIKme"[^>]*>(.+?)<\/a>/g;
   const matches = [...html.matchAll(newsRegex)];
 
   return matches.map(match => ({
-    title: match[2].replace(/<.*?>/g, "").trim(), // Hapus tag HTML dalam title
-    url: `https://news.google.com/articles/${match[1]}`,
+  url: `https://news.google.com${match[1].replace(/&amp;/g, "&")}`, // Perbaiki "&amp;" menjadi "&"
+  title: match[2].trim(),
   }));
 }
 
