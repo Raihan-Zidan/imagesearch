@@ -216,15 +216,19 @@ function extractPosttime(snippet) {
 }
 
 
-
-
-
 async function fetchThumbnail(articleUrl) {
   try {
-    const response = await fetch(articleUrl);
-    const html = await response.text();
+    const response = await fetch(articleUrl, {
+      method: "GET",
+      mode: "no-cors", // Menghindari blokir CORS di browser
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://www.google.com/",
+      }
+    });
 
-    console.log("HTML Retrieved:", html);  // Log HTML untuk debugging
+    const html = await response.text();
+    console.log("HTML Retrieved:", html); // Debugging
 
     const metaTags = html.match(/<meta[^>]+>/g) || [];
     let thumbnail = null;
@@ -234,8 +238,8 @@ async function fetchThumbnail(articleUrl) {
           /name=["']twitter:image["']/.test(tag) || 
           /itemprop=["']image["']/.test(tag) || 
           /name=["']image["']/.test(tag)) {
-
-        console.log("Matching Meta Tag:", tag);  // Log meta tag yang cocok
+        
+        console.log("Matching Meta Tag:", tag); // Debugging
         const match = tag.match(/content=["'](https?:\/\/[^"']+)["']/);
         if (match) {
           thumbnail = match[1];
@@ -244,7 +248,7 @@ async function fetchThumbnail(articleUrl) {
       }
     }
 
-    // Jika masih belum ada thumbnail, cek <link rel="image_src">
+    // Jika belum ada thumbnail, coba cari dari <link rel="image_src">
     if (!thumbnail) {
       const linkMatch = html.match(/<link[^>]+rel=["']image_src["'][^>]+href=["'](https?:\/\/[^"']+)["']/);
       if (linkMatch) {
@@ -261,20 +265,40 @@ async function fetchThumbnail(articleUrl) {
     }
 
     if (!thumbnail) {
-      return new Response(JSON.stringify({ error: "No thumbnail found" }), { status: 404 });
+      return new Response(JSON.stringify({ error: "No thumbnail found" }), { 
+        status: 404, 
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+      });
     }
 
     return new Response(JSON.stringify({ thumbnail }), {
-        status: 200,
-        headers: getCorsHeaders(),
-      });
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      }
+    });
 
   } catch (error) {
     console.error("Fetch Error:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch the article" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Failed to fetch the article" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      }
+    });
   }
 }
-
 
 
 function cleanHTML(html) {
