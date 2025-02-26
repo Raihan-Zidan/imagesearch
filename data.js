@@ -135,20 +135,29 @@ function extractImageData(html) {
 function extractNewsData(html) {
   const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
 
-  const posttimeRegex = /<div[^>]*class=["']OSrXXb rbYSKb LfVVr["'][^>]*>\s*<span>(.*?)<\/span>/g;
-
   const matches = [...html.matchAll(newsRegex)];
-  const posttimeMatches = [...html.matchAll(posttimeRegex)].map(match => match[1]);
 
-  return matches.map((match, index) => ({
-    url: decodeURIComponent(match[1]), // Ambil & decode URL berita
-    title: match[2].trim(),
-    source: match[3].trim(),
-    snippet: cleanHTML(match[4]), // Bersihkan HTML dalam ringkasan
-    thumbnail: match[5] || null, // Ambil URL thumbnail
-    posttime: posttimeMatches[index] ? posttimeMatches[index].trim() : null, // Ambil waktu publikasi
-  }));
+  return matches.map(match => {
+    const snippet = cleanHTML(match[4]); // Bersihkan snippet dari tag HTML
+    const posttime = extractPosttime(snippet); // Ambil bagian terakhir dari snippet
+
+    return {
+      url: decodeURIComponent(match[1]), // Ambil & decode URL berita
+      title: match[2].trim(),
+      source: match[3].trim(),
+      snippet, // Simpan snippet yang sudah dibersihkan
+      thumbnail: match[5] || null, // Ambil URL thumbnail
+      publish: posttime, // Ambil waktu publikasi dari bagian akhir snippet
+    };
+  });
 }
+
+function extractPosttime(snippet) {
+  const parts = snippet.split("\n"); // Pisahkan berdasarkan baris baru
+  const lastPart = parts[parts.length - 1].trim(); // Ambil bagian terakhir dan hapus spasi
+  return lastPart || null; // Kembalikan nilai atau null jika kosong
+}
+
 
 
 
