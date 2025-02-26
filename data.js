@@ -84,7 +84,7 @@ async function fetchImages(query, start) {
 
 async function fetchNews(query, start) {
   let allNews = [];
-  const maxStart = 20; // Maksimum start value
+  const maxStart = 60; // Maksimum start value
   const step = 10; // Setiap permintaan mengambil 10 berita
 
   try {
@@ -175,56 +175,29 @@ function extractImageData(html) {
   }).filter(image => image.url !== "https://ssl.gstatic.com/gb/images/bar/al-icon.png");
 }
 
-async function extractNewsData(html) {
+function extractNewsData(html) {
   const newsRegex = /<a href="\/url\?q=(.*?)&amp;.*?"><div[^>]*class="[^"]*BNeawe vvjwJb AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe UPmit AP7Wnd lRVwie[^"]*"[^>]*>(.*?)<\/div>.*?<div[^>]*class="[^"]*BNeawe s3v9rd AP7Wnd[^"]*"[^>]*>(.*?)<\/div>.*?<img[^>]*class="h1hFNe"[^>]*src="(.*?)"/gs;
 
-  if (typeof html !== "string") {
-    console.error("Invalid HTML input: Expected a string but got", typeof html);
-    return [];
-  }
+  const matches = [...html.matchAll(newsRegex)];
 
-  const matches = Array.from(html.matchAll(newsRegex)); // Ensure it's an array
+  return matches
+    .map(match => {
+      const url = decodeURIComponent(match[1]); // Ambil & decode URL berita
+      if (shouldExcludeUrl(url)) return null; // Hapus berita dari URL yang tidak diinginkan
 
-  if (matches.length === 0) {
-    console.warn("No matches found for news regex");
-  }
-
-  const newsItems = await Promise.all(
-    matches.map(async (match) => {
-      const url = decodeURIComponent(match[1]);
-      if (shouldExcludeUrl(url)) return null;
-
-      const snippet = cleanHTML(match[4]);
-      const posttime = extractPosttime(snippet);
-      const thumbnail = await fetchThumbnailFromAPI(url);
+      const snippet = cleanHTML(match[4]); // Bersihkan snippet dari tag HTML
+      const posttime = extractPosttime(snippet); // Ambil bagian terakhir dari snippet
 
       return {
         url,
         title: match[2].trim(),
         source: match[3].trim(),
-        snippet,
-        thumbnail,
-        posttime,
+        snippet, // Simpan snippet yang sudah dibersihkan
+        thumbnail: match[5] || null, // Ambil URL thumbnail
+        posttime, // Ambil waktu publikasi dari bagian akhir snippet
       };
     })
-  );
-
-  return newsItems.filter((item) => item !== null);
-}
-
-
-
-async function fetchThumbnailFromAPI(articleUrl) {
-  try {
-    let response = await fetch(`https://imagesearch.raihan-zidan2709.workers.dev/thumbnail?url=${encodeURIComponent(articleUrl)}`);
-    if (!response.ok) throw new Error("Failed to fetch thumbnail");
-
-    let data = await response.json();
-    return data.thumbnail || null;
-  } catch (error) {
-    console.error("Error fetching thumbnail:", error);
-    return null;
-  }
+    .filter(item => item !== null); // Hapus hasil yang di-filter
 }
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
@@ -291,15 +264,9 @@ async function fetchThumbnail(articleUrl) {
       return new Response(JSON.stringify({ error: "No thumbnail found" }), { status: 404 });
     }
 
-return new Response(JSON.stringify({ thumbnail }), {
-  headers: {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",  // 🔥 Izinkan akses dari semua domain
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  }
-});
-
+    return new Response(JSON.stringify({ thumbnail }), {
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Fetch Error:", error);
     return new Response(JSON.stringify({ error: "Failed to fetch the article" }), { status: 500 });
