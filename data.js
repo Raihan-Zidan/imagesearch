@@ -20,15 +20,6 @@ export default {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
       return fetchNews(query);
-    } else if (url.pathname === "/proxy") {
-      const imageUrl = url.searchParams.get("url");
-      if (!imageUrl) {
-        return new Response(JSON.stringify({ error: "Parameter 'url' diperlukan" }), {
-          status: 400,
-          headers: getCorsHeaders(),
-        });
-      }
-      return proxyImage(imageUrl);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -86,52 +77,6 @@ async function fetchImages(query, start) {
       });
     }
 }
-
-async function proxyImage(imageUrl) {
-  try {
-    const compressedUrl = `https://api.resmush.it/ws.php?img=${encodeURIComponent(imageUrl)}&quality=70`;
-
-    const response = await fetch(compressedUrl, {
-  headers: {
-    "User-Agent": "Mozilla/5.0",
-    "Referer": "https://imagesearch.raihan-zidan2709.workers.dev/", // Gantilah dengan domain yang valid
-  },
-});
-
-
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Gagal memuat gambar" }), {
-        status: response.status,
-        headers: getCorsHeaders(),
-      });
-    }
-
-    const data = await response.json();
-    if (!data.dest) {
-      return new Response(JSON.stringify({ error: "Gagal mengompresi gambar" }), {
-        status: 500,
-        headers: getCorsHeaders(),
-      });
-    }
-
-    // Fetch gambar yang sudah dikompresi
-    const compressedResponse = await fetch(data.dest);
-    return new Response(compressedResponse.body, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=86400",
-      },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: `Gagal memproksi gambar: ${error.message}` }), {
-      status: 500,
-      headers: getCorsHeaders(),
-    });
-  }
-}
-
-
 
 async function fetchNews(query) {
   try {
@@ -207,7 +152,7 @@ function cleanHTML(html) {
 
 
 function getCloudflareResizedUrl(imageUrl) {
-  return `https://imagesearch.raihan-zidan2709.workers.dev/proxy?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
 }
 
 
@@ -226,3 +171,4 @@ function getCorsHeaders() {
     "Access-Control-Allow-Headers": "Content-Type",
   };
 }
+
