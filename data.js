@@ -54,7 +54,7 @@ async function fetchImages(query, start) {
 
     for (const image of images) {
       const secureUrl = ensureHttps(image.url);
-      const proxiedUrl = `/imgproxy?url=${encodeURIComponent(secureUrl)}`;
+      const proxiedUrl = `/img?url=${encodeURIComponent(secureUrl)}`;
       imageResults.push({
         image: secureUrl,
         thumbnail: proxiedUrl,
