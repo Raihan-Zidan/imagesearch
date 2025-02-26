@@ -113,6 +113,7 @@ async function proxyImage(imageUrl) {
       headers: getCorsHeaders(),
     });
   }
+}
 
 
 async function fetchNews(query) {
