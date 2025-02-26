@@ -82,6 +82,45 @@ async function fetchImages(query, start) {
 }
 
 async function fetchNews(query, start) {
+  let allNews = [];
+  const maxStart = 30; // Maksimum start value
+  const step = 10; // Setiap permintaan mengambil 10 berita
+
+  try {
+    while (start < maxStart) {
+      const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws&start=${start}`;
+      const response = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          "Referer": "https://www.google.com/",
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch news");
+      const html = await response.text();
+
+      const newsData = extractNewsData(html);
+      if (newsData.length === 0) break; // Stop jika tidak ada data lagi
+
+      allNews.push(...newsData);
+      start += step; // Tambah nilai start untuk mengambil batch berikutnya
+    }
+
+    return new Response(JSON.stringify({ query, items: allNews }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
+  }
+}
+
+
+async function fetchNsews(query, start) {
   try {
     const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws&start=${start}`;
     const response = await fetch(searchUrl, {
