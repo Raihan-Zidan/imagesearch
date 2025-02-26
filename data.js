@@ -8,9 +8,8 @@ export default {
 
     const query = url.searchParams.get("q");
     const start = parseInt(url.searchParams.get("start")) || 0;
-    const articleUrl = url.searchParams.get("url");
 
-    if (!query && !articleUrl) {
+    if (!query) {
       return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
         status: 400,
         headers: getCorsHeaders(),
@@ -20,9 +19,7 @@ export default {
     if (url.pathname === "/images") {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
-      return fetchNews(query, start);
-    } else if (url.pathname === "/thumbnail" && articleUrl) {
-      return fetchThumbnail(articleUrl);
+      return fetchNews(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -81,52 +78,9 @@ async function fetchImages(query, start) {
     }
 }
 
-
-async function fetchNews(query, start) {
-  let allNews = [];
-  const maxStart = 20; // Maksimum start value
-  const step = 10; // Setiap permintaan mengambil 10 berita
-
+async function fetchNews(query) {
   try {
-    while (start < maxStart) {
-      const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws&start=${start}`;
-      const response = await fetch(searchUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Referer": "https://www.google.com/",
-        },
-      });
-
-      if (!response.ok) throw new Error("Failed to fetch news");
-      const html = await response.text();
-
-      const newsData = extractNewsData(html);
-      if (newsData.length === 0) break; // Stop jika tidak ada data lagi
-
-      allNews.push(...newsData);
-      start += step; // Tambah nilai start untuk mengambil batch berikutnya
-    }
-
-    return new Response(JSON.stringify({ query, items: allNews }), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
-
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: getCorsHeaders(),
-    });
-  }
-}
-
-
-
-
-
-async function fetchNsews(query, start) {
-  try {
-    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws&start=${start}`;
+    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}&tbm=nws`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
@@ -216,91 +170,6 @@ function extractPosttime(snippet) {
 }
 
 
-async function fetchThumbnail(articleUrl) {
-  try {
-    const response = await fetch(articleUrl, {
-      method: "GET",
-      mode: "no-cors", // Menghindari blokir CORS di browser
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://www.google.com/",
-      }
-    });
-
-    const html = await response.text();
-    console.log("HTML Retrieved:", html); // Debugging
-
-    const metaTags = html.match(/<meta[^>]+>/g) || [];
-    let thumbnail = null;
-
-    for (const tag of metaTags) {
-      if (/property=["']og:image["']/.test(tag) || 
-          /name=["']twitter:image["']/.test(tag) || 
-          /itemprop=["']image["']/.test(tag) || 
-          /name=["']image["']/.test(tag)) {
-        
-        console.log("Matching Meta Tag:", tag); // Debugging
-        const match = tag.match(/content=["'](https?:\/\/[^"']+)["']/);
-        if (match) {
-          thumbnail = match[1];
-          break;
-        }
-      }
-    }
-
-    // Jika belum ada thumbnail, coba cari dari <link rel="image_src">
-    if (!thumbnail) {
-      const linkMatch = html.match(/<link[^>]+rel=["']image_src["'][^>]+href=["'](https?:\/\/[^"']+)["']/);
-      if (linkMatch) {
-        thumbnail = linkMatch[1];
-      }
-    }
-
-    // Jika masih belum ada, coba ambil gambar pertama dalam artikel <img>
-    if (!thumbnail) {
-      const imgMatch = html.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/);
-      if (imgMatch) {
-        thumbnail = imgMatch[1];
-      }
-    }
-
-    if (!thumbnail) {
-      return new Response(JSON.stringify({ error: "No thumbnail found" }), { 
-        status: 404, 
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        }
-      });
-    }
-
-    return new Response(JSON.stringify({ thumbnail }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      }
-    });
-
-  } catch (error) {
-    console.error("Fetch Error:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch the article" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      }
-    });
-  }
-}
-
-
 function cleanHTML(html) {
   return html
     .replace(/<br\s*\/?>/gi, "\n") // Ubah <br> jadi newline
@@ -324,9 +193,10 @@ function ensureHttps(url) {
 function getCorsHeaders() {
   return {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "https://raihan-zidan.github.io/",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   };
 }
 
+          
