@@ -150,16 +150,40 @@ async function fetchThumbnail(articleUrl) {
   try {
     const response = await fetch(articleUrl);
     const html = await response.text();
+
+    console.log("HTML Retrieved:", html);  // Log HTML untuk debugging
+
     const metaTags = html.match(/<meta[^>]+>/g) || [];
     let thumbnail = null;
 
     for (const tag of metaTags) {
-      if (/property=["']og:image["']/.test(tag) || /name=["']twitter:image["']/.test(tag)) {
+      if (/property=["']og:image["']/.test(tag) || 
+          /name=["']twitter:image["']/.test(tag) || 
+          /itemprop=["']image["']/.test(tag) || 
+          /name=["']image["']/.test(tag)) {
+
+        console.log("Matching Meta Tag:", tag);  // Log meta tag yang cocok
         const match = tag.match(/content=["'](https?:\/\/[^"']+)["']/);
         if (match) {
           thumbnail = match[1];
           break;
         }
+      }
+    }
+
+    // Jika masih belum ada thumbnail, cek <link rel="image_src">
+    if (!thumbnail) {
+      const linkMatch = html.match(/<link[^>]+rel=["']image_src["'][^>]+href=["'](https?:\/\/[^"']+)["']/);
+      if (linkMatch) {
+        thumbnail = linkMatch[1];
+      }
+    }
+
+    // Jika masih belum ada, coba ambil gambar pertama dalam artikel <img>
+    if (!thumbnail) {
+      const imgMatch = html.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/);
+      if (imgMatch) {
+        thumbnail = imgMatch[1];
       }
     }
 
@@ -171,6 +195,7 @@ async function fetchThumbnail(articleUrl) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Fetch Error:", error);
     return new Response(JSON.stringify({ error: "Failed to fetch the article" }), { status: 500 });
   }
 }
