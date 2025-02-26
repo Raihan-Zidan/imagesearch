@@ -108,12 +108,19 @@ async function fetchNews(query) {
 }
 
 function extractNewsData(html) {
+  // Regex untuk mendapatkan URL dan Title
   const newsRegex = /<a[^>]+href="([^"]*\/read\/[^"]+)"[^>]*>(.*?)<\/a>/g;
   const matches = [...html.matchAll(newsRegex)];
 
-  return matches.map(match => ({
-  url: `https://news.google.com${match[1].replace(/&amp;/g, "&")}`, // Perbaiki "&amp;" menjadi "&"
-  title: match[2].trim(),
+  // Regex untuk mendapatkan Publish Time
+  const timeRegex = /<time[^>]+datetime="([^"]+)"[^>]*>/g;
+  const timeMatches = [...html.matchAll(timeRegex)].map(match => match[1]); // Ambil semua publish time
+
+  // Buat array hasil
+  return matches.map((match, index) => ({
+    url: `https://news.google.com${match[1].replace(/&amp;/g, "&")}`, // Perbaiki "&amp;" menjadi "&"
+    title: match[2].trim(),
+    publishTime: timeMatches[index] || null, // Jika tidak ada, default ke null
   }));
 }
 
