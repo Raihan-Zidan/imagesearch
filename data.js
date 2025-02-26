@@ -87,8 +87,6 @@ async function fetchImages(query, start) {
     }
 }
 
-import sharp from "sharp";
-
 async function proxyImage(imageUrl) {
   try {
     const response = await fetch(imageUrl, {
@@ -102,29 +100,19 @@ async function proxyImage(imageUrl) {
       });
     }
 
-    // Baca gambar sebagai buffer
-    const imageBuffer = await response.arrayBuffer();
-
-    // Kompres gambar menggunakan Sharp (ubah ke format WebP atau kurangi kualitas)
-    const compressedImage = await sharp(Buffer.from(imageBuffer))
-      .resize(800) // Ubah ukuran ke 800px (sesuai kebutuhan)
-      .jpeg({ quality: 70 }) // Konversi ke JPEG dengan kualitas 70%
-      .toBuffer();
-
-    return new Response(compressedImage, {
+    return new Response(response.body, {
       status: 200,
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": response.headers.get("Content-Type") || "image/jpeg",
         "Cache-Control": "public, max-age=86400",
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: `Gagal memproksi gambar: ${error.message}` }), {
+    return new Response(JSON.stringify({ error: Gagal memproksi gambar: ${error.message} }), {
       status: 500,
       headers: getCorsHeaders(),
     });
   }
-}
 
 
 async function fetchNews(query) {
