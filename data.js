@@ -53,7 +53,6 @@ async function fetchImages(query, start) {
       for (const image of images) {
         const secureUrl = ensureHttps(image.url);
         const resizedUrl = getCloudflareResizedUrl(secureUrl);
-        if (resizedUrl != "https://cdn0-production-images-kly.akamaized.net/thumbor-fallback-image.gif") {
         imageResults.push({
           image: secureUrl,
           thumbnail: resizedUrl,
@@ -61,7 +60,7 @@ async function fetchImages(query, start) {
           siteName: image.siteName,
           pageUrl: image.pageUrl,
         });
-        }
+        
       }
 
       console.log("Response JSON:", { query, images: imageResults });
