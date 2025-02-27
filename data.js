@@ -49,16 +49,20 @@ async function fetchImages(query, start) {
 
       const html = await response.text();
       const images = extractImageData(html);
-
+  
+      
       for (const image of images) {
         const secureUrl = ensureHttps(image.url);
         const resizedUrl = getCloudflareResizedUrl(secureUrl);
+        const { width, height } = await fetchImageSize(secureUrl); // Ambil dimensi gambar
         imageResults.push({
           image: secureUrl,
           thumbnail: resizedUrl,
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
+          width,
+          height,
         });
         
       }
@@ -76,6 +80,19 @@ async function fetchImages(query, start) {
         status: 500,
         headers: getCorsHeaders(),
       });
+    }
+}
+
+async function fetchImageSize(imageUrl) {
+    try {
+        const response = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=json`);
+        if (!response.ok) throw new Error("Failed to fetch image size");
+
+        const data = await response.json();
+        return { width: data.width, height: data.height };
+    } catch (error) {
+        console.error("Error fetching image size:", error);
+        return { width: null, height: null };
     }
 }
 
