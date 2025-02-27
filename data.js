@@ -54,15 +54,13 @@ async function fetchImages(query, start) {
       for (const image of images) {
         const secureUrl = ensureHttps(image.url);
         const resizedUrl = getCloudflareResizedUrl(secureUrl);
-        const { width, height } = await fetchImageSize(secureUrl);
         imageResults.push({
           image: secureUrl,
           thumbnail: resizedUrl,
           title: image.title,
           siteName: image.siteName,
           pageUrl: image.pageUrl,
-          width,
-          height,
+
         });
         
       }
