@@ -54,7 +54,7 @@ async function fetchImages(query, start) {
       for (const image of images) {
         const secureUrl = ensureHttps(image.url);
         const resizedUrl = getCloudflareResizedUrl(secureUrl);
-        const { width, height } = await fetchImageSize(secureUrl); // Ambil dimensi gambar
+        const { width, height } = await fetchImageSize(secureUrl);
         imageResults.push({
           image: secureUrl,
           thumbnail: resizedUrl,
