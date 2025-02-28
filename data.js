@@ -51,21 +51,41 @@ async function fetchImages(query, start) {
 
         const images = extractImageData(html).slice(0, 15); // Batasi jumlah gambar
 
-        const sizePromises = images.map(async (image) => {
+        const firstTenImages = images.slice(0, 4);
+        const remainingImages = images.slice(4);
+
+        // Proses 10 gambar pertama
+        const processedFirstTen = await Promise.all(
+            firstTenImages.map(async (image) => {
+                const secureUrl = ensureHttps(image.url);
+                const size = await fetchImageSize(secureUrl);
+                return {
+                    image: secureUrl,
+                    thumbnail: getCloudflareResizedUrl(secureUrl),
+                    title: image.title,
+                    siteName: image.siteName,
+                    pageUrl: image.pageUrl,
+                    width: size.width, // Tambahkan width
+                    height: size.height, // Tambahkan height
+                };
+            })
+        );
+
+        // Proses gambar sisanya tanpa width dan height
+        const processedRemaining = remainingImages.map((image) => {
             const secureUrl = ensureHttps(image.url);
-            const size = await fetchImageSize(secureUrl);
             return {
                 image: secureUrl,
                 thumbnail: getCloudflareResizedUrl(secureUrl),
                 title: image.title,
                 siteName: image.siteName,
                 pageUrl: image.pageUrl,
-                height: size.height,
-                width: size.width,
+                // Tidak ada width dan height
             };
         });
 
-        imageResults = await Promise.all(sizePromises);
+        // Gabungkan hasilnya
+        imageResults = [...processedFirstTen, ...processedRemaining];
 
       console.log("Response JSON:", { query, images: imageResults });
 
