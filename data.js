@@ -49,7 +49,7 @@ async function fetchImages(query, start) {
 
       const html = await response.text();
 
-        const images = extractImageData(html).slice(0, 15); // Batasi jumlah gambar
+        const images = extractImageData(html); // Batasi jumlah gambar
 
         for (const image of images) {
         const secureUrl = ensureHttps(image.url);
@@ -120,7 +120,6 @@ async function fetchNews(query) {
 }
 
 
-
 function extractImageData(html) {
   const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
   const titleRegex = /<div class="toI8Rb OSrXXb"[^>]*>(.*?)<\/div>/g;
@@ -182,7 +181,6 @@ function extractPosttime(snippet) {
   return lastPart || null; // Kembalikan nilai atau null jika kosong
 }
 
-
 function cleanHTML(html) {
   return html
     .replace(/<br\s*\/?>/gi, "\n") // Ubah <br> jadi newline
@@ -190,11 +188,9 @@ function cleanHTML(html) {
     .trim();
 }
 
-
 function getCloudflareResizedUrl(imageUrl) {
-  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=10`;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=webp&w=200&q=30`;
 }
-
 
 function ensureHttps(url) {
   if (url.startsWith("http://")) {
