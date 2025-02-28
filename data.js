@@ -51,43 +51,18 @@ async function fetchImages(query, start) {
 
         const images = extractImageData(html).slice(0, 15); // Batasi jumlah gambar
 
-        const firstTenImages = images.slice(0, 4);
-        const remainingImages = images.slice(4);
+        for (const image of images) {
+        const secureUrl = ensureHttps(image.url);
+        const resizedUrl = getCloudflareResizedUrl(secureUrl);
+        imageResults.push({
+          image: secureUrl,
+          thumbnail: resizedUrl,
+          title: image.title,
+          siteName: image.siteName,
+          pageUrl: image.pageUrl,
 
-        // Proses 10 gambar pertama
-        const processedFirstTen = await Promise.all(
-            firstTenImages.map(async (image) => {
-                const secureUrl = ensureHttps(image.url);
-                const size = await fetchImageSize(secureUrl);
-                return {
-                    image: secureUrl,
-                    thumbnail: getCloudflareResizedUrl(secureUrl),
-                    title: image.title,
-                    siteName: image.siteName,
-                    pageUrl: image.pageUrl,
-                    width: size.width, // Tambahkan width
-                    height: size.height, // Tambahkan height
-                };
-            })
-        );
-
-        // Proses gambar sisanya tanpa width dan height
-        const processedRemaining = remainingImages.map((image) => {
-            const secureUrl = ensureHttps(image.url);
-            return {
-                image: secureUrl,
-                thumbnail: getCloudflareResizedUrl(secureUrl),
-                title: image.title,
-                siteName: image.siteName,
-                pageUrl: image.pageUrl,
-                // Tidak ada width dan height
-            };
         });
-
-        // Gabungkan hasilnya
-        imageResults = [...processedFirstTen, ...processedRemaining];
-
-      console.log("Response JSON:", { query, images: imageResults });
+        }
 
       return new Response(JSON.stringify({ query, images: imageResults }), {
         status: 200,
