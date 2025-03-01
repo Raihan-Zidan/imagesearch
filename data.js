@@ -70,11 +70,21 @@ async function fetchImages(query, start) {
       });
 
     } catch (error) {
-      return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
+    console.error("Fetch Error Details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+    });
+
+    return new Response(JSON.stringify({ 
+        error: `Terjadi kesalahan: ${error.name} - ${error.message || "Tidak ada pesan error"}` 
+    }), {
         status: 500,
         headers: getCorsHeaders(),
-      });
+    });
     }
+}
+
 }
 
 async function fetchImageSize(imageUrl) {
