@@ -118,8 +118,8 @@ function extractKnowledgeSnippet(html) {
   const snippet = snippetMatch ? snippetMatch[1].trim() : "No snippet found";
 
   const images = [];
-  const mainImageRegex = /<li class=\"mb-0 mr-0 mainImage\"[^>]*>.*?<img[^>]*src=\"(.*?)\"[^>]*alt=\"(.*?)\"/;
-  const secondaryImageRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(.*?)\"/g;
+  const mainImageRegex = /<li class=\"mb-0 mr-0 mainImage\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"[^>]*alt=\"(.*?)\"/;
+  const secondaryImageRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"/g;
   
   const mainMatch = html.match(mainImageRegex);
   if (mainMatch) {
