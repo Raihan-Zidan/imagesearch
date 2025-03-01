@@ -89,22 +89,21 @@ async function fetchImages(query, start) {
 
 async function fetchKnowledge(query) {
   try {
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}`;
     const response = await fetch(searchUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "User-Agent": "Mozilla/5.0",
         "Referer": "https://www.google.com/",
       },
     });
 
-    if (!response.ok) throw new Error("Failed to fetch knowledge data");
+    if (!response.ok) throw new Error("Terkadang, apa yang kita mau tidak selalu kita dapatkan. Error");
     const html = await response.text();
-    const snippet = extractKnowledgeSnippet(html);
-
-    return new Response(JSON.stringify({ query, snippet }), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
+    
+      return new Response(JSON.stringify({ query: query, items: extractKnowledgeSnippet(html) }), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
