@@ -85,8 +85,6 @@ async function fetchImages(query, start) {
 }
 }
 
-}
-
 async function fetchImageSize(imageUrl) {
     try {
         const response = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=json`);
