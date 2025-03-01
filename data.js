@@ -69,7 +69,7 @@ async function fetchImages(query, start) {
         headers: getCorsHeaders(),
       });
 
-    } catch (error) {
+} catch (error) {
     console.error("Fetch Error Details:", {
         name: error.name,
         message: error.message,
@@ -82,7 +82,7 @@ async function fetchImages(query, start) {
         status: 500,
         headers: getCorsHeaders(),
     });
-    }
+}
 }
 
 }
