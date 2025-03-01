@@ -89,7 +89,7 @@ async function fetchImages(query, start) {
 
 async function fetchKnowledge(query) {
   try {
-    const searchUrl = `https://www.google.com/search?hl=id&q=${encodeURIComponent(query)}`;
+    const searchUrl = `https://search.yahoo.com/search?p=${encodeURIComponent(query)}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -113,9 +113,9 @@ async function fetchKnowledge(query) {
 }
 
 function extractKnowledgeSnippet(html) {
-  const snippetRegex = /<span jsname="bN97Pc"><span>(.*?)<\/span><\/span>/;
+  const snippetRegex = /<div class="compText mt-16 mb-8 cl-b fc-444444 ls-02 mlr-24 fz-14 lh-22"><p class="">(.*?)<a/;
   const match = html.match(snippetRegex);
-  return match ? match[1] : "No snippet found";
+  return match ? match[1].trim() : "No snippet found";
 }
 
 async function fetchImageSize(imageUrl) {
