@@ -100,10 +100,14 @@ async function fetchKnowledge(query) {
     if (!response.ok) throw new Error("Terkadang, apa yang kita mau tidak selalu kita dapatkan. Error");
     const html = await response.text();
     
-      return new Response(JSON.stringify({ query: query, items: extractKnowledgeSnippet(html) }), {
-        status: 200,
-        headers: getCorsHeaders(),
-      });
+    const { snippet, images, thumb } = extractKnowledge(html);
+
+    const result = thumb ? { query, snippet, thumb } : { query, snippet, images };
+    
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
@@ -121,21 +125,23 @@ function extractKnowledgeSnippet(html) {
   let thumb = null;
 
   // Regex untuk thumb
-  const thumbRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"/;
+  const thumbRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^"]+)\"/;
   const thumbMatch = html.match(thumbRegex);
   if (thumbMatch) {
     thumb = { imageUrl: thumbMatch[1], type: "thumb" };
   }
 
   // Regex untuk gambar utama & sekunder
-  const imageRegex = /<li[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"[^>]*alt=\"(.*?)\"/g;
-  let match;
-  while ((match = imageRegex.exec(html)) !== null) {
-    images.push({
-      imageUrl: match[1],
-      title: match[2],
-      type: match[0].includes("mainImage") ? "main" : "secondary",
-    });
+  if (!thumb) {
+    const imageRegex = /<li[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^"]+)\"[^>]*alt=\"(.*?)\"/g;
+    let match;
+    while ((match = imageRegex.exec(html)) !== null) {
+      images.push({
+        imageUrl: match[1],
+        title: match[2],
+        type: match[0].includes("mainImage") ? "main" : "secondary",
+      });
+    }
   }
 
   return { snippet, images, thumb };
