@@ -118,27 +118,27 @@ function extractKnowledgeSnippet(html) {
   const snippet = snippetMatch ? snippetMatch[1].trim() : "No snippet found";
 
   const images = [];
-  const mainImageRegex = /<li class=\"mb-0 mr-0 mainImage\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"[^>]*alt=\"(.*?)\"/;
-  const secondaryImageRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"/g;
-  
-  const mainMatch = html.match(mainImageRegex);
-  if (mainMatch) {
-    images.push({
-      imageUrl: mainMatch[1],
-      title: mainMatch[2],
-      type: "main",
-    });
+  let thumb = null;
+
+  // Regex untuk thumb
+  const thumbRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"/;
+  const thumbMatch = html.match(thumbRegex);
+  if (thumbMatch) {
+    thumb = { imageUrl: thumbMatch[1], type: "thumb" };
   }
 
+  // Regex untuk gambar utama & sekunder
+  const imageRegex = /<li[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^\"]+)\"[^>]*alt=\"(.*?)\"/g;
   let match;
-  while ((match = secondaryImageRegex.exec(html)) !== null) {
+  while ((match = imageRegex.exec(html)) !== null) {
     images.push({
       imageUrl: match[1],
-      type: "secondary",
+      title: match[2],
+      type: match[0].includes("mainImage") ? "main" : "secondary",
     });
   }
 
-  return { snippet, images };
+  return { snippet, images, thumb };
 }
 
 async function fetchImageSize(imageUrl) {
