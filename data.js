@@ -116,7 +116,7 @@ async function fetchKnowledge(query) {
   }
 }
 
-function extractKnowledgeSnippet(html) {
+function extractKnowledge(html) {
   const snippetRegex = /<div class=\"compText mt-16 mb-8 cl-b fc-444444 ls-02 mlr-24 fz-14 lh-22\"><p class=\"\">(.*?)<a/;
   const snippetMatch = html.match(snippetRegex);
   const snippet = snippetMatch ? snippetMatch[1].trim() : "No snippet found";
