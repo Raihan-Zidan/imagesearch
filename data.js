@@ -20,6 +20,8 @@ export default {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
       return fetchNews(query);
+    } else if (url.pathname === "/knowledge") {
+      return fetchKnowledge(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -83,6 +85,38 @@ async function fetchImages(query, start) {
         headers: getCorsHeaders(),
     });
 }
+}
+
+async function fetchKnowledge(query) {
+  try {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Referer": "https://www.google.com/",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch knowledge data");
+    const html = await response.text();
+    const snippet = extractKnowledgeSnippet(html);
+
+    return new Response(JSON.stringify({ query, snippet }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
+  }
+}
+
+function extractKnowledgeSnippet(html) {
+  const snippetRegex = /<span jsname="bN97Pc"><span>(.*?)<\/span><\/span>/;
+  const match = html.match(snippetRegex);
+  return match ? match[1] : "No snippet found";
 }
 
 async function fetchImageSize(imageUrl) {
