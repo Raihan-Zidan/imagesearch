@@ -70,7 +70,6 @@ async function fetchImages(query, start) {
       });
 
     } catch (error) {
-      console.error("Error:", error);
       return new Response(JSON.stringify({ error: `Terjadi kesalahan. ${error.message}` }), {
         status: 500,
         headers: getCorsHeaders(),
