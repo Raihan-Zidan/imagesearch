@@ -113,9 +113,32 @@ async function fetchKnowledge(query) {
 }
 
 function extractKnowledgeSnippet(html) {
-  const snippetRegex = /<div class="compText mt-16 mb-8 cl-b fc-444444 ls-02 mlr-24 fz-14 lh-22"><p class="">(.*?)<a/;
-  const match = html.match(snippetRegex);
-  return match ? match[1].trim() : "No snippet found";
+  const snippetRegex = /<div class=\"compText mt-16 mb-8 cl-b fc-444444 ls-02 mlr-24 fz-14 lh-22\"><p class=\"\">(.*?)<a/;
+  const snippetMatch = html.match(snippetRegex);
+  const snippet = snippetMatch ? snippetMatch[1].trim() : "No snippet found";
+
+  const images = [];
+  const mainImageRegex = /<li class=\"mb-0 mr-0 mainImage\"[^>]*>.*?<img[^>]*src=\"(.*?)\"[^>]*alt=\"(.*?)\"/;
+  const secondaryImageRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(.*?)\"/g;
+  
+  const mainMatch = html.match(mainImageRegex);
+  if (mainMatch) {
+    images.push({
+      imageUrl: mainMatch[1],
+      title: mainMatch[2],
+      type: "main",
+    });
+  }
+
+  let match;
+  while ((match = secondaryImageRegex.exec(html)) !== null) {
+    images.push({
+      imageUrl: match[1],
+      type: "secondary",
+    });
+  }
+
+  return { snippet, images };
 }
 
 async function fetchImageSize(imageUrl) {
