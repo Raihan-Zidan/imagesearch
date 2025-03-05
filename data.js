@@ -213,17 +213,20 @@ async function fetchBingImages(query, start) {
 }
 
 function extractBingImageData(html) {
-  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+title=["']([^"']+)["'][^>]+href=["'](\/images\/search\?view=detailV2[^"']+)["']/gs;
+  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>/gs;
   
   const images = [];
   let match;
 
   while ((match = entryRegex.exec(html)) !== null) {
     const imageUrl = match[1];
-    const title = match[2];
-    const pageUrl = `https://www.bing.com${match[3]}`;
+    const pageUrl = match[2];
 
-    images.push({ image: imageUrl, title, pageUrl });
+    if (/^\/rp\//.test(imageUrl)) {
+      continue;
+    }
+
+    images.push({ image: imageUrl, pageUrl });
   }
 
   return images;
