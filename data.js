@@ -209,25 +209,21 @@ async function fetchBingImages(query) {
 }
 
 function extractBingImageData(html) {
-  const imageRegex = /<img[^>]+(?:data-src|src)=['"]([^'"]+)['"][^>]*>/g;
-  const entryRegex = /<a[^>]+href=["'](\/images\/search\?view=detailV2[^"']+)["'][^>]*>.*?<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+title=["']([^"']+)["'][^>]*>/gs;
-
+  const entryRegex = /<img[^>]+class=["'][^"']*rms_img[^"']*["'][^>]+src=["']([^"']+)["'][^>]*>.*?<a[^>]+title=["']([^"']+)["'][^>]+href=["'](\/images\/search\?view=detailV2[^"']+)["']/gs;
+  
   const images = [];
   let match;
 
   while ((match = entryRegex.exec(html)) !== null) {
-    const pageUrl = `https://www.bing.com${match[1]}`;
-    const imageUrl = match[2];
-    const title = match[3];
-
-    if (imageUrl.startsWith("/sa/") || imageUrl.startsWith("/rp/") || (imageUrl.startsWith("data:image") && imageUrl.length < 200)) {
-      continue; // Skip gambar yang tidak relevan
-    }
+    const imageUrl = match[1];
+    const title = match[2];
+    const pageUrl = `https://www.bing.com${match[3]}`;
 
     images.push({ image: imageUrl, title, pageUrl });
   }
 
   return images;
+}
 }
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
