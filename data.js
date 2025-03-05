@@ -176,25 +176,29 @@ function extractNewsData(html) {
 }
 
 
-async function fetchBingImages(query) {
+async function fetchBingImages(query, start) {
   try {
-    const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}`;
-    const response = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://www.bing.com/",
-      },
-    });
-
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch images from Bing" }), {
-        status: response.status,
-        headers: getCorsHeaders(),
+    const images = [];
+    for (let i = 0; i < 3; i++) {
+      const offset = start + i * 20;
+      const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&first=${offset}`;
+      const response = await fetch(searchUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          "Referer": "https://www.bing.com/",
+        },
       });
-    }
 
-    const html = await response.text();
-    const images = extractBingImageData(html);
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: "Failed to fetch images from Bing" }), {
+          status: response.status,
+          headers: getCorsHeaders(),
+        });
+      }
+
+      const html = await response.text();
+      images.push(...extractBingImageData(html));
+    }
 
     return new Response(JSON.stringify({ query, images }), {
       status: 200,
@@ -209,7 +213,7 @@ async function fetchBingImages(query) {
 }
 
 function extractBingImageData(html) {
-  const entryRegex = /<img[^>]+class=["'][^"']*rms_img[^"']*["'][^>]+src=["']([^"']+)["'][^>]*>.*?<a[^>]+title=["']([^"']+)["'][^>]+href=["'](\/images\/search\?view=detailV2[^"']+)["']/gs;
+  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+title=["']([^"']+)["'][^>]+href=["'](\/images\/search\?view=detailV2[^"']+)["']/gs;
   
   const images = [];
   let match;
