@@ -213,23 +213,34 @@ async function fetchBingImages(query, start) {
 }
 
 function extractBingImageData(html) {
-  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+href=["'][^"']+["'][^>]*title=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gs;
-  
-  const images = [];
-  let match;
+const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+href=["'][^"']+["'][^>]*title=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gs;
+const titleRegex = /<a\s+title="([^"]+)"\s+href="([^"]+)"[^>]*>.*?<\/a>/g;
 
-  while ((match = entryRegex.exec(html)) !== null) {
-    const imageUrl = match[1];
-    const title = match[2].trim();
-    const pageUrl = match[3];
-    const siteName = match[4].trim();
+const images = [];
+let match;
 
-    if (/^\/rp\//.test(imageUrl)) {
-      continue;
-    }
+while ((match = entryRegex.exec(html)) !== null) {
+  const imageUrl = match[1];
+  const siteName = match[2].trim();
+  const pageUrl = match[3];
+  const siteText = match[4].trim();
 
-    images.push({ siteName, title, image: imageUrl, pageUrl });
+  if (/^\/rp\//.test(imageUrl)) {
+    continue;
   }
+
+  // Ambil title dari titleRegex yang sesuai dengan pageUrl
+  let title = "";
+  let titleMatch;
+  while ((titleMatch = titleRegex.exec(html)) !== null) {
+    if (titleMatch[2] === pageUrl) {
+      title = titleMatch[1].trim();
+      break;
+    }
+  }
+
+  images.push({ siteName, title, image: imageUrl, pageUrl });
+}
 
   return images;
 }
