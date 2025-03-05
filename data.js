@@ -213,16 +213,16 @@ async function fetchBingImages(query, start) {
 }
 
 function extractBingImageData(html) {
-  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+href=["']([^"']+)["'][^>]*title=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gs;
+  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+href=["'][^"']+["'][^>]*title=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gs;
   
   const images = [];
   let match;
 
   while ((match = entryRegex.exec(html)) !== null) {
     const imageUrl = match[1];
-    const pageUrl = match[4];
-    const siteName = match[3].trim();
-    const title = match[5].trim();
+    const title = match[2].trim();
+    const pageUrl = match[3];
+    const siteName = match[4].trim();
 
     if (/^\/rp\//.test(imageUrl)) {
       continue;
