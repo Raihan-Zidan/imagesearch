@@ -213,25 +213,27 @@ async function fetchBingImages(query, start) {
 }
 
 function extractBingImageData(html) {
-  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gs;
-  
+  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>.*?<a[^>]+title=["']([^"']+)["']/gs;
+
   const images = [];
   let match;
 
   while ((match = entryRegex.exec(html)) !== null) {
     const imageUrl = match[1];
     const pageUrl = match[2];
-    const title = match[3].trim();
+    const siteName = match[3].trim();
+    const title = match[4].trim();
 
     if (/^\/rp\//.test(imageUrl)) {
       continue;
     }
 
-    images.push({ title, image: imageUrl, pageUrl });
+    images.push({ title, image: imageUrl, pageUrl, siteName });
   }
 
   return images;
 }
+
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
 function shouldExcludeUrl(url) {
