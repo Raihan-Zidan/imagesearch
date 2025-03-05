@@ -241,9 +241,10 @@ async function fetchDuckDuckGoImages(query, start) {
 }
 
 function extractDuckDuckGoImageData(html) {
-  const imageRegex = /"image":"(https?:\\/\\/[^"\\]+)"/g;
+  const imageRegex = /"image":"(https?:\/\/[^"]+)"/g;
+
   const titleRegex = /"title":"([^"]+)"/g;
-  const pageUrlRegex = /"url":"(https?:\\/\\/[^"\\]+)"/g;
+  const pageUrlRegex = /"url":"(https?:\/\/[^"\\]+)"/g;
   
   const imageMatches = [...html.matchAll(imageRegex)];
   const titleMatches = [...html.matchAll(titleRegex)];
