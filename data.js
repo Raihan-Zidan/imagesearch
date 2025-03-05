@@ -209,10 +209,11 @@ async function fetchEcosiaImages(query) {
 }
 
 function extractEcosiaImageData(html) {
-  const imageRegex = /"imageUrl":"(https?:\\/\\/[^"\\]+)"/g;
+  const imageRegex = /"imageUrl":"(https?:\/\/[^"']+)"/g;
   const titleRegex = /"title":"(.*?)"/g;
-  const pageUrlRegex = /"sourceUrl":"(https?:\\/\\/[^"\\]+)"/g;
-  const thumbnailRegex = /"thumbnailUrl":"(https?:\\/\\/[^"\\]+)"/g;
+  const pageUrlRegex = /"sourceUrl":"(https?:\/\/[^"']+)"/g;
+  const thumbnailRegex = /"thumbnailUrl":"(https?:\/\/[^"']+)"/g;
+
 
   const images = [];
   let match;
