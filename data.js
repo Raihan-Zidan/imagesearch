@@ -224,7 +224,6 @@ function extractBingImageData(html) {
 
   return images;
 }
-}
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
 function shouldExcludeUrl(url) {
