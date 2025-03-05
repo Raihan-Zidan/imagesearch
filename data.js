@@ -175,39 +175,6 @@ function extractNewsData(html) {
     .filter(item => item !== null); // Hapus hasil yang di-filter
 }
 
-export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-
-    if (url.pathname === "/favicon.ico") {
-      return new Response(null, { status: 204 });
-    }
-
-    const query = url.searchParams.get("q");
-    const start = parseInt(url.searchParams.get("start")) || 0;
-
-    if (!query) {
-      return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
-        status: 400,
-        headers: getCorsHeaders(),
-      });
-    }
-
-    if (url.pathname === "/images") {
-      return fetchImages(query, start);
-    } else if (url.pathname === "/news") {
-      return fetchNews(query);
-    } else if (url.pathname === "/dimage") {
-      return fetchDuckDuckGoImages(query, start);
-    }
-
-    return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
-      status: 404,
-      headers: getCorsHeaders(),
-    });
-  },
-};
-
 async function fetchDuckDuckGoImages(query, start) {
   try {
     const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images&start=${start}`;
