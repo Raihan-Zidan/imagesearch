@@ -175,12 +175,46 @@ function extractNewsData(html) {
     .filter(item => item !== null); // Hapus hasil yang di-filter
 }
 
-async function fetchDuckDuckGoImages(query) {
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/favicon.ico") {
+      return new Response(null, { status: 204 });
+    }
+
+    const query = url.searchParams.get("q");
+    const start = parseInt(url.searchParams.get("start")) || 0;
+
+    if (!query) {
+      return new Response(JSON.stringify({ error: "Query parameter 'q' is required" }), {
+        status: 400,
+        headers: getCorsHeaders(),
+      });
+    }
+
+    if (url.pathname === "/images") {
+      return fetchImages(query, start);
+    } else if (url.pathname === "/news") {
+      return fetchNews(query);
+    } else if (url.pathname === "/dimage") {
+      return fetchDuckDuckGoImages(query, start);
+    }
+
+    return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
+      status: 404,
+      headers: getCorsHeaders(),
+    });
+  },
+};
+
+async function fetchDuckDuckGoImages(query, start) {
   try {
-    const searchUrl = `https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query)}`;
+    const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images&start=${start}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
+        "Referer": "https://duckduckgo.com/",
       },
     });
 
@@ -191,14 +225,8 @@ async function fetchDuckDuckGoImages(query) {
       });
     }
 
-    const data = await response.json();
-    const images = data.results.map(img => ({
-      image: img.image,
-      thumbnail: img.thumbnail,
-      title: img.title,
-      source: img.source,
-      pageUrl: img.url,
-    }));
+    const html = await response.text();
+    const images = extractDuckDuckGoImageData(html);
 
     return new Response(JSON.stringify({ query, images }), {
       status: 200,
@@ -210,6 +238,24 @@ async function fetchDuckDuckGoImages(query) {
       headers: getCorsHeaders(),
     });
   }
+}
+
+function extractDuckDuckGoImageData(html) {
+  const imageRegex = /"image":"(https?:\\/\\/[^"\\]+)"/g;
+  const titleRegex = /"title":"([^"]+)"/g;
+  const pageUrlRegex = /"url":"(https?:\\/\\/[^"\\]+)"/g;
+  
+  const imageMatches = [...html.matchAll(imageRegex)];
+  const titleMatches = [...html.matchAll(titleRegex)];
+  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+
+  return imageMatches.map((match, index) => {
+    return {
+      image: match[1].replace(/\\/g, ""),
+      title: titleMatches[index] ? titleMatches[index][1] : "",
+      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1].replace(/\\/g, "") : "",
+    };
+  });
 }
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
