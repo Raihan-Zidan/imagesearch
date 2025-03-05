@@ -21,7 +21,7 @@ export default {
     } else if (url.pathname === "/news") {
       return fetchNews(query);
     } else if (url.pathname === "/dimage") {
-      return fetchYahooImages(query);
+      return fetchEcosiaImages(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -176,25 +176,25 @@ function extractNewsData(html) {
 }
 
 
-async function fetchYahooImages(query) {
+async function fetchEcosiaImages(query) {
   try {
-    const searchUrl = `https://images.search.yahoo.com/search/images?p=${encodeURIComponent(query)}`;
+    const searchUrl = `https://www.ecosia.org/images?q=${encodeURIComponent(query)}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://images.search.yahoo.com/",
+        "Referer": "https://www.ecosia.org/",
       },
     });
 
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch images from Yahoo" }), {
+      return new Response(JSON.stringify({ error: "Failed to fetch images from Ecosia" }), {
         status: response.status,
         headers: getCorsHeaders(),
       });
     }
 
     const html = await response.text();
-    const images = extractYahooImageData(html);
+    const images = extractEcosiaImageData(html);
 
     return new Response(JSON.stringify({ query, images }), {
       status: 200,
@@ -208,21 +208,24 @@ async function fetchYahooImages(query) {
   }
 }
 
-function extractYahooImageData(html) {
-  const imageRegex = /<img[^>]+src=["'](https?:\/\/[^"']+)["']/g;
-  const titleRegex = /<img[^>]+alt=["'](.*?)["']/g;
-  const pageUrlRegex = /<a[^>]+href=["'](https?:\/\/[^"'#]+)["']/g;
+function extractEcosiaImageData(html) {
+  const imageRegex = /"imageUrl":"(https?:\\/\\/[^"\\]+)"/g;
+  const titleRegex = /"title":"(.*?)"/g;
+  const pageUrlRegex = /"sourceUrl":"(https?:\\/\\/[^"\\]+)"/g;
+  const thumbnailRegex = /"thumbnailUrl":"(https?:\\/\\/[^"\\]+)"/g;
 
   const images = [];
   let match;
   while ((match = imageRegex.exec(html)) !== null) {
     const titleMatch = titleRegex.exec(html);
     const pageUrlMatch = pageUrlRegex.exec(html);
+    const thumbnailMatch = thumbnailRegex.exec(html);
 
     images.push({
       image: match[1].replace(/\\/g, ""),
       title: titleMatch ? titleMatch[1] : "",
       pageUrl: pageUrlMatch ? pageUrlMatch[1].replace(/\\/g, "") : "",
+      thumbnail: thumbnailMatch ? thumbnailMatch[1].replace(/\\/g, "") : ""
     });
   }
 
