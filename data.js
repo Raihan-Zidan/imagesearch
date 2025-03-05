@@ -33,66 +33,91 @@ export default {
 
 async function fetchImages(query, start) {
     let imageResults = [];
+    let proxyList = [];
+    
+    // Daftar API Key (utama & backup)
+    const apiKeys = [
+        "ks265xsdzcb67puwxval",  // Ganti dengan API Key utama
+        "aa603wlnuw6do0a41tp3"   // Ganti dengan API Key backup
+    ];
+
+    // Ambil daftar proxy dengan API Key yang masih jalan
+    for (const apiKey of apiKeys) {
+        try {
+            const proxyListUrl = `https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&premium=true&key=${apiKey}`;
+            const proxyListResponse = await fetch(proxyListUrl);
+            const proxyText = await proxyListResponse.text();
+            proxyList = proxyText.trim().split("\n");
+
+            if (proxyList.length > 0) break; // Stop kalau proxy berhasil diambil
+        } catch (error) {
+            console.error(`API Key ${apiKey} gagal: ${error.message}`);
+        }
+    }
+
+    if (proxyList.length === 0) return new Response(JSON.stringify({ error: "No proxies available" }), { status: 500 });
+
+    // Pilih proxy random dari daftar yang didapat
+    const randomProxy = proxyList[Math.floor(Math.random() * proxyList.length)];
+    console.log(`Pakai proxy: ${randomProxy}`);
+
     try {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
-      const response = await fetch(searchUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-          "Accept-Encoding": "gzip, deflate, br",
-          "Referer": "https://www.google.com/",
-         "Connection": "keep-alive",
-          "Upgrade-Insecure-Requests": "1",
-          "Sec-Fetch-Dest": "document",
-          "Sec-Fetch-Mode": "navigate",
-          "Sec-Fetch-Site": "same-origin"
-        },
-      });
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
 
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
-          status: response.status,
-          headers: getCorsHeaders(),
+        const response = await fetch(searchUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                "Referer": "https://www.google.com/",
+            },
+            cf: {
+                // Proxy via Cloudflare Workers
+                cacheTtl: 0,
+                cacheEverything: false
+            },
+            redirect: "follow"
         });
-      }
 
-      const html = await response.text();
-
-        const images = extractImageData(html); // Batasi jumlah gambar
-
-        for (const image of images) {
-          const secureUrl = ensureHttps(image.url);
-          const resizedUrl = getCloudflareResizedUrl(secureUrl);
-          imageResults.push({
-            image: secureUrl,
-            thumbnail: resizedUrl,
-            title: image.title,
-            siteName: image.siteName,
-            pageUrl: image.pageUrl,
-
-          });
+        if (!response.ok) {
+            return new Response(JSON.stringify({ error: `Terjadi kesalahan.` }), {
+                status: response.status,
+                headers: getCorsHeaders(),
+            });
         }
 
-      return new Response(JSON.stringify({ query, images: imageResults }), {
-        status: 200,
-        headers: getCorsHeaders(),
-      });
+        const html = await response.text();
+        const images = extractImageData(html);
 
-  } catch (error) {
-    console.error("Fetch Error Details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-    });
+        for (const image of images) {
+            const secureUrl = ensureHttps(image.url);
+            const resizedUrl = getCloudflareResizedUrl(secureUrl);
+            imageResults.push({
+                image: secureUrl,
+                thumbnail: resizedUrl,
+                title: image.title,
+                siteName: image.siteName,
+                pageUrl: image.pageUrl,
+            });
+        }
 
-    return new Response(JSON.stringify({ 
-        error: `Terjadi kesalahan: ${error.name} - ${error.message || "Tidak ada pesan error"}` 
-    }), {
-        status: 500,
-        headers: getCorsHeaders(),
-    });
-  }
+        return new Response(JSON.stringify({ query, images: imageResults }), {
+            status: 200,
+            headers: getCorsHeaders(),
+        });
+
+    } catch (error) {
+        console.error("Fetch Error Details:", {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+
+        return new Response(JSON.stringify({ 
+            error: `Terjadi kesalahan: ${error.name} - ${error.message || "Tidak ada pesan error"}` 
+        }), {
+            status: 500,
+            headers: getCorsHeaders(),
+        });
+    }
 }
 
 async function fetchImageSize(imageUrl) {
