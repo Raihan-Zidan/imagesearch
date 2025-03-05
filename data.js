@@ -20,8 +20,6 @@ export default {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
       return fetchNews(query);
-    } else if (url.pathname === "/knowledge") {
-      return fetchKnowledge(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -85,66 +83,6 @@ async function fetchImages(query, start) {
         headers: getCorsHeaders(),
     });
 }
-}
-
-async function fetchKnowledge(query) {
-  try {
-    const searchUrl = `https://search.yahoo.com/search?p=${encodeURIComponent(query)}`;
-    const response = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Referer": "https://www.google.com/",
-      },
-    });
-
-    if (!response.ok) throw new Error("Terkadang, apa yang kita mau tidak selalu kita dapatkan. Error");
-    const html = await response.text();
-    
-    const { snippet, images, thumb } = extractKnowledge(html);
-
-    const result = thumb ? { query, snippet, thumb } : { query, snippet, images };
-    
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: getCorsHeaders(),
-    });
-  }
-}
-
-function extractKnowledge(html) {
-  const snippetRegex = /<div class=\"compText mt-16 mb-8 cl-b fc-444444 ls-02 mlr-24 fz-14 lh-22\"><p class=\"\">(.*?)<a/;
-  const snippetMatch = html.match(snippetRegex);
-  const snippet = snippetMatch ? snippetMatch[1].trim() : "No snippet found";
-
-  const images = [];
-  let thumb = null;
-
-  // Regex untuk thumb
-  const thumbRegex = /<div class=\"thmb sb\"[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^"]+)\"/;
-  const thumbMatch = html.match(thumbRegex);
-  if (thumbMatch) {
-    thumb = { imageUrl: thumbMatch[1], type: "thumb" };
-  }
-
-  // Regex untuk gambar utama & sekunder
-  if (!thumb) {
-    const imageRegex = /<li[^>]*>.*?<img[^>]*src=\"(https:\/\/s\.yimg\.com\/fz\/api\/res[^"]+)\"[^>]*alt=\"(.*?)\"/g;
-    let match;
-    while ((match = imageRegex.exec(html)) !== null) {
-      images.push({
-        imageUrl: match[1],
-        title: match[2],
-        type: match[0].includes("mainImage") ? "main" : "secondary",
-      });
-    }
-  }
-
-  return { snippet, images, thumb };
 }
 
 async function fetchImageSize(imageUrl) {
