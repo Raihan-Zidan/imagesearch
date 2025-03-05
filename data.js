@@ -199,11 +199,10 @@ async function fetchBingImages(query, start) {
       const html = await response.text();
       images.push(...extractBingImageData(html));
     }
-
-    return new Response(JSON.stringify({ query, items: images }), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
+      return new Response(JSON.stringify({ query, items: images }), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
   } catch (error) {
     return new Response(JSON.stringify({ error: `Terjadi kesalahan: ${error.message}` }), {
       status: 500,
