@@ -21,7 +21,7 @@ export default {
     } else if (url.pathname === "/news") {
       return fetchNews(query);
     } else if (url.pathname === "/dimage") {
-      return fetchDuckDuckGoImages(query);
+      return fetchYahooImages(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -175,25 +175,26 @@ function extractNewsData(html) {
     .filter(item => item !== null); // Hapus hasil yang di-filter
 }
 
-async function fetchDuckDuckGoImages(query, start) {
+
+async function fetchYahooImages(query) {
   try {
-    const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images&start=${start}`;
+    const searchUrl = `https://images.search.yahoo.com/search/images?p=${encodeURIComponent(query)}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://duckduckgo.com/",
+        "Referer": "https://images.search.yahoo.com/",
       },
     });
 
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch images from DuckDuckGo" }), {
+      return new Response(JSON.stringify({ error: "Failed to fetch images from Yahoo" }), {
         status: response.status,
         headers: getCorsHeaders(),
       });
     }
 
     const html = await response.text();
-    const images = extractDuckDuckGoImageData(html);
+    const images = extractYahooImageData(html);
 
     return new Response(JSON.stringify({ query, images }), {
       status: 200,
@@ -207,22 +208,25 @@ async function fetchDuckDuckGoImages(query, start) {
   }
 }
 
-function extractDuckDuckGoImageData(html) {
-  const imageRegex = /"(https?:\/\/[^" ]+\.(jpg|jpeg|png|gif|webp))"/g;
-  const titleRegex = /"title":"([^"]+)"/g;
-  const pageUrlRegex = /"url":"(https?:\/\/[^"\\]+)"/g;
-  
-  const imageMatches = [...html.matchAll(imageRegex)];
-  const titleMatches = [...html.matchAll(titleRegex)];
-  const pageUrlMatches = [...html.matchAll(pageUrlRegex)];
+function extractYahooImageData(html) {
+  const imageRegex = /<img[^>]+?src=["'](https?:\\/\\/[^"']+?)["']/g;
+  const titleRegex = /<img[^>]+?alt=["'](.*?)["']/g;
+  const pageUrlRegex = /<a[^>]+?href=["'](https?:\\/\\/[^"']+?)["']/g;
 
-  return imageMatches.map((match, index) => {
-    return {
+  const images = [];
+  let match;
+  while ((match = imageRegex.exec(html)) !== null) {
+    const titleMatch = titleRegex.exec(html);
+    const pageUrlMatch = pageUrlRegex.exec(html);
+
+    images.push({
       image: match[1].replace(/\\/g, ""),
-      title: titleMatches[index] ? titleMatches[index][1] : "",
-      pageUrl: pageUrlMatches[index] ? pageUrlMatches[index][1].replace(/\\/g, "") : "",
-    };
-  });
+      title: titleMatch ? titleMatch[1] : "",
+      pageUrl: pageUrlMatch ? pageUrlMatch[1].replace(/\\/g, "") : "",
+    });
+  }
+
+  return images;
 }
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
