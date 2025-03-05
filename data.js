@@ -216,11 +216,16 @@ function extractBingImageData(html) {
   const images = [];
   let match;
   while ((match = imageRegex.exec(html)) !== null) {
+    const imageUrl = match[1];
+    if (imageUrl.startsWith("/sa/") || imageUrl.startsWith("/rp/") || imageUrl.startsWith("data:image") && imageUrl.length < 200) {
+      continue; // Skip gambar yang tidak relevan
+    }
+
     const titleMatch = titleRegex.exec(html);
     const pageUrlMatch = pageUrlRegex.exec(html);
 
     images.push({
-      image: match[1],
+      image: imageUrl,
       title: titleMatch ? titleMatch[1] : "",
       pageUrl: pageUrlMatch ? pageUrlMatch[1] : ""
     });
