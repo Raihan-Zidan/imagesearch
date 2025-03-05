@@ -209,9 +209,9 @@ async function fetchYahooImages(query) {
 }
 
 function extractYahooImageData(html) {
-  const imageRegex = /<img[^>]+?src=["'](https?:\\/\\/[^"']+?)["']/g;
-  const titleRegex = /<img[^>]+?alt=["'](.*?)["']/g;
-  const pageUrlRegex = /<a[^>]+?href=["'](https?:\\/\\/[^"']+?)["']/g;
+  const imageRegex = /<img[^>]+src=["'](https?:\/\/[^"']+)["']/g;
+  const titleRegex = /<img[^>]+alt=["'](.*?)["']/g;
+  const pageUrlRegex = /<a[^>]+href=["'](https?:\/\/[^"'#]+)["']/g;
 
   const images = [];
   let match;
