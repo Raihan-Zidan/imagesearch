@@ -21,7 +21,7 @@ export default {
     } else if (url.pathname === "/news") {
       return fetchNews(query);
     } else if (url.pathname === "/dimage") {
-      return fetchYahooImages(query);
+      return fetchBingImages(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -176,25 +176,25 @@ function extractNewsData(html) {
 }
 
 
-async function fetchYahooImages(query) {
+async function fetchBingImages(query) {
   try {
-    const searchUrl = `https://images.search.yahoo.com/search/images?p=${encodeURIComponent(query)}`;
+    const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://images.search.yahoo.com/",
+        "Referer": "https://www.bing.com/",
       },
     });
 
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch images from Yahoo" }), {
+      return new Response(JSON.stringify({ error: "Failed to fetch images from Bing" }), {
         status: response.status,
         headers: getCorsHeaders(),
       });
     }
 
     const html = await response.text();
-    const images = extractYahooImageData(html);
+    const images = extractBingImageData(html);
 
     return new Response(JSON.stringify({ query, images }), {
       status: 200,
@@ -208,9 +208,9 @@ async function fetchYahooImages(query) {
   }
 }
 
-function extractYahooImageData(html) {
-  const imageRegex = /<img[^>]+src=["'](https?:\/\/[^"']+)["']/g;
-  const titleRegex = /alt=["']([^"']+)["']/g;
+function extractBingImageData(html) {
+  const imageRegex = /<img[^>]+data-src=["'](https?:\/\/[^"']+)["']/g;
+  const titleRegex = /<img[^>]+alt=["']([^"']+)["']/g;
   const pageUrlRegex = /<a[^>]+href=["'](https?:\/\/[^"']+)["']/g;
 
   const images = [];
