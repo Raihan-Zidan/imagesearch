@@ -21,7 +21,7 @@ export default {
     } else if (url.pathname === "/news") {
       return fetchNews(query);
     } else if (url.pathname === "/dimage") {
-      return fetchBingImages(query);
+      return fetchBingImages(query, start);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -54,16 +54,16 @@ async function fetchImages(query, start) {
         const images = extractImageData(html); // Batasi jumlah gambar
 
         for (const image of images) {
-        const secureUrl = ensureHttps(image.url);
-        const resizedUrl = getCloudflareResizedUrl(secureUrl);
-        imageResults.push({
-          image: secureUrl,
-          thumbnail: resizedUrl,
-          title: image.title,
-          siteName: image.siteName,
-          pageUrl: image.pageUrl,
+          const secureUrl = ensureHttps(image.url);
+          const resizedUrl = getCloudflareResizedUrl(secureUrl);
+          imageResults.push({
+            image: secureUrl,
+            thumbnail: resizedUrl,
+            title: image.title,
+            siteName: image.siteName,
+            pageUrl: image.pageUrl,
 
-        });
+          });
         }
 
       return new Response(JSON.stringify({ query, images: imageResults }), {
@@ -71,7 +71,7 @@ async function fetchImages(query, start) {
         headers: getCorsHeaders(),
       });
 
-} catch (error) {
+  } catch (error) {
     console.error("Fetch Error Details:", {
         name: error.name,
         message: error.message,
@@ -84,7 +84,7 @@ async function fetchImages(query, start) {
         status: 500,
         headers: getCorsHeaders(),
     });
-}
+  }
 }
 
 async function fetchImageSize(imageUrl) {
@@ -179,7 +179,7 @@ function extractNewsData(html) {
 async function fetchBingImages(query, start) {
   try {
     const images = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const offset = start + i * 20;
       const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&first=${offset}`;
       const response = await fetch(searchUrl, {
@@ -228,7 +228,7 @@ function extractBingImageData(html) {
       continue;
     }
 
-    images.push({ title, image: imageUrl, pageUrl, siteName });
+    images.push({ title, image: imageUrl, thumbnail: imageUrl, pageUrl, siteName });
   }
 
   return images;
