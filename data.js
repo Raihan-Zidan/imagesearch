@@ -186,22 +186,15 @@ async function fetchEcosiaImages(query) {
       },
     });
 
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Failed to fetch images from Ecosia" }), {
-        status: response.status,
+    if (!response.ok) throw new Error("Failed to fetch news");
+    const html = await response.text();
+
+      return new Response(JSON.stringify({ query: query, items: extractEcosiaImageData(html) }), {
+        status: 200,
         headers: getCorsHeaders(),
       });
-    }
-
-    const html = await response.text();
-    const images = extractEcosiaImageData(html);
-
-    return new Response(JSON.stringify({ query, images }), {
-      status: 200,
-      headers: getCorsHeaders(),
-    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: `Terjadi kesalahan: ${error.message}` }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: getCorsHeaders(),
     });
