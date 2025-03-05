@@ -209,26 +209,22 @@ async function fetchBingImages(query) {
 }
 
 function extractBingImageData(html) {
-  const imageRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["']/g;
-  const titleRegex = /<a[^>]+title=["']([^"']+)["']/g;
-  const pageUrlRegex = /<a[^>]+href=["'](https?:\/\/[^"']+)["']/g;
+  const imageRegex = /<img[^>]+(?:data-src|src)=['"]([^'"]+)['"][^>]*>/g;
+  const entryRegex = /<a[^>]+href=["'](\/images\/search\?view=detailV2[^"']+)["'][^>]*>.*?<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+title=["']([^"']+)["'][^>]*>/gs;
 
   const images = [];
   let match;
-  while ((match = imageRegex.exec(html)) !== null) {
-    const imageUrl = match[1];
-    if (imageUrl.startsWith("/sa/") || imageUrl.startsWith("/rp/") || imageUrl.startsWith("data:image") && imageUrl.length < 200) {
+
+  while ((match = entryRegex.exec(html)) !== null) {
+    const pageUrl = `https://www.bing.com${match[1]}`;
+    const imageUrl = match[2];
+    const title = match[3];
+
+    if (imageUrl.startsWith("/sa/") || imageUrl.startsWith("/rp/") || (imageUrl.startsWith("data:image") && imageUrl.length < 200)) {
       continue; // Skip gambar yang tidak relevan
     }
 
-    const titleMatch = titleRegex.exec(html);
-    const pageUrlMatch = pageUrlRegex.exec(html);
-
-    images.push({
-      image: imageUrl,
-      title: titleMatch ? titleMatch[1] : "",
-      pageUrl: pageUrlMatch ? pageUrlMatch[1] : ""
-    });
+    images.push({ image: imageUrl, title, pageUrl });
   }
 
   return images;
