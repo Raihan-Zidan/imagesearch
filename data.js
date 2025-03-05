@@ -21,7 +21,7 @@ export default {
     } else if (url.pathname === "/news") {
       return fetchNews(query);
     } else if (url.pathname === "/dimage") {
-      return fetchEcosiaImages(query);
+      return fetchYahooImages(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -176,50 +176,53 @@ function extractNewsData(html) {
 }
 
 
-async function fetchEcosiaImages(query) {
+async function fetchYahooImages(query) {
   try {
-    const searchUrl = `https://www.ecosia.org/images?q=${encodeURIComponent(query)}`;
+    const searchUrl = `https://images.search.yahoo.com/search/images?p=${encodeURIComponent(query)}`;
     const response = await fetch(searchUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://www.ecosia.org/",
+        "Referer": "https://images.search.yahoo.com/",
       },
     });
 
-    if (!response.ok) throw new Error("Failed to fetch news");
-    const html = await response.text();
-
-      return new Response(JSON.stringify({ query: query, items: extractEcosiaImageData(html) }), {
-        status: 200,
+    if (!response.ok) {
+      return new Response(JSON.stringify({ error: "Failed to fetch images from Yahoo" }), {
+        status: response.status,
         headers: getCorsHeaders(),
       });
+    }
+
+    const html = await response.text();
+    const images = extractYahooImageData(html);
+
+    return new Response(JSON.stringify({ query, images }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: `Terjadi kesalahan: ${error.message}` }), {
       status: 500,
       headers: getCorsHeaders(),
     });
   }
 }
 
-function extractEcosiaImageData(html) {
-  const imageRegex = /"imageUrl":"(https?:\/\/[^"']+)"/g;
-  const titleRegex = /"title":"(.*?)"/g;
-  const pageUrlRegex = /"sourceUrl":"(https?:\/\/[^"']+)"/g;
-  const thumbnailRegex = /"thumbnailUrl":"(https?:\/\/[^"']+)"/g;
-
+function extractYahooImageData(html) {
+  const imageRegex = /<img[^>]+src=["'](https?:\/\/[^"']+)["']/g;
+  const titleRegex = /alt=["']([^"']+)["']/g;
+  const pageUrlRegex = /<a[^>]+href=["'](https?:\/\/[^"']+)["']/g;
 
   const images = [];
   let match;
   while ((match = imageRegex.exec(html)) !== null) {
     const titleMatch = titleRegex.exec(html);
     const pageUrlMatch = pageUrlRegex.exec(html);
-    const thumbnailMatch = thumbnailRegex.exec(html);
 
     images.push({
-      image: match[1].replace(/\\/g, ""),
+      image: match[1],
       title: titleMatch ? titleMatch[1] : "",
-      pageUrl: pageUrlMatch ? pageUrlMatch[1].replace(/\\/g, "") : "",
-      thumbnail: thumbnailMatch ? thumbnailMatch[1].replace(/\\/g, "") : ""
+      pageUrl: pageUrlMatch ? pageUrlMatch[1] : ""
     });
   }
 
