@@ -210,7 +210,7 @@ async function fetchBingImages(query) {
 
 function extractBingImageData(html) {
   const imageRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["']/g;
-  const titleRegex = /<img[^>]+alt=["']([^"']+)["']/g;
+  const titleRegex = /<a[^>]+title=["']([^"']+)["']/g;
   const pageUrlRegex = /<a[^>]+href=["'](https?:\/\/[^"']+)["']/g;
 
   const images = [];
