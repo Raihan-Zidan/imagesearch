@@ -20,6 +20,8 @@ export default {
       return fetchImages(query, start);
     } else if (url.pathname === "/news") {
       return fetchNews(query);
+    } else if (url.pathname === "/dimage") {
+      return fetchDuckDuckGoImages(query);
     }
 
     return new Response(JSON.stringify({ error: "Invalid endpoint" }), {
@@ -171,6 +173,43 @@ function extractNewsData(html) {
       };
     })
     .filter(item => item !== null); // Hapus hasil yang di-filter
+}
+
+async function fetchDuckDuckGoImages(query) {
+  try {
+    const searchUrl = `https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query)}`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+      },
+    });
+
+    if (!response.ok) {
+      return new Response(JSON.stringify({ error: "Failed to fetch images from DuckDuckGo" }), {
+        status: response.status,
+        headers: getCorsHeaders(),
+      });
+    }
+
+    const data = await response.json();
+    const images = data.results.map(img => ({
+      image: img.image,
+      thumbnail: img.thumbnail,
+      title: img.title,
+      source: img.source,
+      pageUrl: img.url,
+    }));
+
+    return new Response(JSON.stringify({ query, images }), {
+      status: 200,
+      headers: getCorsHeaders(),
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: `Terjadi kesalahan: ${error.message}` }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
+  }
 }
 
 // Fungsi untuk menyaring URL yang tidak diinginkan
