@@ -200,7 +200,7 @@ async function fetchBingImages(query, start) {
       images.push(...extractBingImageData(html));
     }
 
-    return new Response(JSON.stringify({ query, images }), {
+    return new Response(JSON.stringify({ query, items: images }), {
       status: 200,
       headers: getCorsHeaders(),
     });
@@ -213,7 +213,7 @@ async function fetchBingImages(query, start) {
 }
 
 function extractBingImageData(html) {
-  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>/gs;
+  const entryRegex = /<img[^>]+(?:data-src|src)=["']([^"']+)["'][^>]*>.*?<a[^>]+data-hookid=["']pgdom["'][^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gs;
   
   const images = [];
   let match;
@@ -221,12 +221,13 @@ function extractBingImageData(html) {
   while ((match = entryRegex.exec(html)) !== null) {
     const imageUrl = match[1];
     const pageUrl = match[2];
+    const title = match[3].trim();
 
     if (/^\/rp\//.test(imageUrl)) {
       continue;
     }
 
-    images.push({ image: imageUrl, pageUrl });
+    images.push({ title, image: imageUrl, pageUrl });
   }
 
   return images;
