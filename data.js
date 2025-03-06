@@ -87,6 +87,10 @@ async function fetchImages(query, start) {
         const html = await response.text();
         const images = extractImageData(html);
 
+        const excludedDomainRegex = /^https?:\/\/cdn[0-9]+-production-images-kly\.akamaized\.net/;
+        if (excludedDomainRegex.test(resizedUrl)) {
+          resizedUrl = secureUrl; // Gunakan gambar asli sebagai thumbnail
+        }
         for (const image of images) {
             const secureUrl = ensureHttps(image.url);
             const resizedUrl = getCloudflareResizedUrl(secureUrl);
