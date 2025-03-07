@@ -264,7 +264,7 @@ function extractBingImageData(html) {
       continue;
     }
 
-    images.push({ title, image: imageUrl, thumbnail: imageUrl, pageUrl, siteName.replace(/<[^>]*>/g, "") });
+    images.push({ title, image: imageUrl, thumbnail: imageUrl, pageUrl, siteName: siteName.replace(/<[^>]*>/g, "") });
   }
 
   return images;
