@@ -216,7 +216,7 @@ function extractNewsData(html) {
 async function fetchBingImages(query, start) {
   try {
     const images = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 2; i++) {
       const offset = start + i * 20;
       const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&first=${offset}`;
       const response = await fetch(searchUrl, {
