@@ -217,7 +217,7 @@ async function fetchBingImages(query, start) {
   try {
     const images = [];
     for (let i = 0; i < 4; i++) {
-      const offset = start + i * 20;
+      const offset = start + i * 10;
       const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&first=${offset}`;
       const response = await fetch(searchUrl, {
         headers: {
