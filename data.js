@@ -216,7 +216,7 @@ function extractNewsData(html) {
 async function fetchBingImages(query, start) {
   try {
     const images = [];
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 4; i++) {
       const offset = start + i * 20;
       const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&first=${offset}`;
       const response = await fetch(searchUrl, {
@@ -257,14 +257,14 @@ function extractBingImageData(html) {
   while ((match = entryRegex.exec(html)) !== null) {
     const imageUrl = match[1];
     const pageUrl = match[2];
-    const siteName = match[3].trim();
+    const siteName = match[3].trim().replace(/\\u003C/g, "<").replace(/\\u003E/g, ">").replace(/\\"/g, '"');
     const title = match[4].trim();
 
     if (/^\/rp\//.test(imageUrl)) {
       continue;
     }
 
-    images.push({ title, image: imageUrl, thumbnail: imageUrl, pageUrl, siteName });
+    images.push({ title, image: imageUrl, thumbnail: imageUrl, pageUrl, siteName.replace(/<[^>]*>/g, "") });
   }
 
   return images;
