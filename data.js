@@ -236,7 +236,7 @@ async function fetchBingImages(query, start) {
       const html = await response.text();
       images.push(...extractBingImageData(html));
     }
-      return new Response(JSON.stringify({ query, items: images }), {
+      return new Response(JSON.stringify({ query, images: images }), {
         status: 200,
         headers: getCorsHeaders(),
       });
