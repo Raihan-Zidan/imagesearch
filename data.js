@@ -89,7 +89,7 @@ async function fetchImages(query, start) {
 
         for (const image of images) {
             const secureUrl = ensureHttps(image.url);
-            const resizedUrl = getCloudflareResizedUrl(secureUrl);
+            let resizedUrl = getCloudflareResizedUrl(secureUrl);
             const excludedDomainRegex = /^https?:\/\/cdn[0-9]+-production-images-kly\.akamaized\.net/;
             if (excludedDomainRegex.test(resizedUrl)) {
               resizedUrl = secureUrl;
