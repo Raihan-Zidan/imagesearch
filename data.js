@@ -62,7 +62,7 @@ async function fetchImages(query, start) {
     console.log(`Pakai proxy: ${randomProxy}`);
 
     try {
-        const searchUrl = `https://api.scraperapi.com?api_key=701ee29ac2e4a750d8e19386aea4078f&url=https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch&start=${start}`;
 
         const response = await fetch(searchUrl, {
             headers: {
@@ -87,13 +87,13 @@ async function fetchImages(query, start) {
         const html = await response.text();
         const images = extractImageData(html);
 
-        const excludedDomainRegex = /^https?:\/\/cdn[0-9]+-production-images-kly\.akamaized\.net/;
-        if (excludedDomainRegex.test(resizedUrl)) {
-          resizedUrl = secureUrl; // Gunakan gambar asli sebagai thumbnail
-        }
         for (const image of images) {
             const secureUrl = ensureHttps(image.url);
             const resizedUrl = getCloudflareResizedUrl(secureUrl);
+            const excludedDomainRegex = /^https?:\/\/cdn[0-9]+-production-images-kly\.akamaized\.net/;
+            if (excludedDomainRegex.test(resizedUrl)) {
+              resizedUrl = secureUrl;
+            }
             imageResults.push({
                 image: secureUrl,
                 thumbnail: resizedUrl,
